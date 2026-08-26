@@ -21,8 +21,9 @@ data/cache/
 artifacts/runs/*/tensorboard/
 artifacts/runs/*/checkpoints/
 tmp/
+submission/*.zip
+submission/audit.json
 
 # OS files
 .DS_Store
 Thumbs.db
-

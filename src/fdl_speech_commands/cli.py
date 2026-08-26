@@ -27,6 +27,7 @@ from .features import extract_features, feature_shape
 from .inference import predict_file
 from .models import build_model
 from .reporting import generate_final_report
+from .submission import audit_project, package_submission, print_audit
 from .training import repeat_selected_seeds, train_all, train_experiment
 from .utils import ProjectError, runtime_metadata, set_global_determinism
 
@@ -147,6 +148,21 @@ def finalize_command(
 def report_command() -> None:
     """Generate the final technical report and finalized model card from artifacts."""
     console.print(f"[green]Report written:[/] {generate_final_report()}")
+
+
+@app.command("audit")
+def audit_command() -> None:
+    """Run the strict final-delivery audit without creating an archive."""
+    checks = audit_project()
+    print_audit(checks)
+    if not all(check.passed for check in checks):
+        raise typer.Exit(code=1)
+
+
+@app.command("package")
+def package_command() -> None:
+    """Create the professor-ready eLearning ZIP after every audit passes."""
+    package_submission()
 
 
 @app.command("infer")
