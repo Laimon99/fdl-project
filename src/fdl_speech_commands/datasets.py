@@ -16,7 +16,8 @@ from .features import extract_features
 from .utils import ProjectError
 
 console = Console()
-_WAVEFORM_TENSOR_CACHE: dict[tuple[str, str, int], tf.Tensor] = {}
+_WAVEFORM_TENSOR_CACHE: dict[tuple[str, str, int, int, str, str], tf.Tensor] = {}
+_NOISE_BANK_CACHE: dict[tuple[str, int], tf.Tensor] = {}
 
 
 def read_manifest(path: str | Path) -> pd.DataFrame:
@@ -29,6 +30,9 @@ def read_manifest(path: str | Path) -> pd.DataFrame:
 
 
 def load_noise_bank(raw_dir: str | Path, clip_samples: int = CLIP_SAMPLES) -> tf.Tensor:
+    key = (str(Path(raw_dir).resolve()), clip_samples)
+    if key in _NOISE_BANK_CACHE:
+        return _NOISE_BANK_CACHE[key]
     clips: list[np.ndarray] = []
     for path in sorted(Path(raw_dir).joinpath(BACKGROUND_NOISE_DIR).glob("*.wav")):
         audio, sample_rate = sf.read(path, dtype="float32", always_2d=False)
@@ -42,7 +46,9 @@ def load_noise_bank(raw_dir: str | Path, clip_samples: int = CLIP_SAMPLES) -> tf
                 clips.append(clip)
     if not clips:
         raise ProjectError("No complete background-noise clips were found")
-    return tf.convert_to_tensor(np.stack(clips), dtype=tf.float32)
+    tensor = tf.convert_to_tensor(np.stack(clips), dtype=tf.float32)
+    _NOISE_BANK_CACHE[key] = tensor
+    return tensor
 
 
 def _decode_record(
@@ -72,7 +78,14 @@ def _load_waveform_tensor(
     clip_samples: int,
 ) -> tf.Tensor:
     """Load selected PCM16 clips once, avoiding repeated small-file I/O every epoch."""
-    key = (str(raw_dir.resolve()), split, clip_samples)
+    key = (
+        str(raw_dir.resolve()),
+        split,
+        clip_samples,
+        len(subset),
+        str(subset.iloc[0]["example_id"]),
+        str(subset.iloc[-1]["example_id"]),
+    )
     if key in _WAVEFORM_TENSOR_CACHE:
         return _WAVEFORM_TENSOR_CACHE[key]
     console.print(

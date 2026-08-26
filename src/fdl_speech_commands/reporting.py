@@ -137,6 +137,11 @@ predictions, and presentation figures. Full commands are in `docs/reproducibilit
 2. Google Research. [Launching the Speech Commands Dataset](https://research.google/blog/launching-the-speech-commands-dataset/), 2017.
 3. Daniel S. Park et al. *SpecAugment: A Simple Data Augmentation Method for Automatic Speech
    Recognition*. [arXiv:1904.08779](https://arxiv.org/abs/1904.08779), 2019.
+4. Tara N. Sainath and Carolina Parada. *Convolutional Neural Networks for Small-Footprint
+   Keyword Spotting*. Interspeech, 2015.
+5. Yundong Zhang et al. *Hello Edge: Keyword Spotting on Microcontrollers*.
+   [arXiv:1711.07128](https://arxiv.org/abs/1711.07128), 2017.
+6. Chuan Guo et al. *On Calibration of Modern Neural Networks*. ICML, 2017.
 """
     output = Path(output)
     output.write_text(content, encoding="utf-8")
