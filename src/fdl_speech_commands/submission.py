@@ -58,7 +58,7 @@ def _check_required_files() -> AuditCheck:
 
 
 def _check_placeholders() -> AuditCheck:
-    markers = ("TBD", "TODO", "PLACEHOLDER", "INSERT NAME")
+    markers = ("TBD", "TODO", "PLACEHOLDER", "INSERT ")
     offenders: list[str] = []
     paths = [PROJECT_ROOT / "README.md"]
     paths.extend((PROJECT_ROOT / "docs").glob("*.md"))

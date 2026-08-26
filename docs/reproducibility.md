@@ -24,12 +24,18 @@ uv run fdl-speech prepare
 uv run fdl-speech eda
 uv run fdl-speech train-all
 uv run fdl-speech leaderboard
-uv run fdl-speech promote
-uv run fdl-speech evaluate artifacts/runs/<selected-run>
+uv run fdl-speech repeat-best
+uv run fdl-speech robustness-ablation
+uv run fdl-speech finalize
+uv run fdl-speech report
+uv run fdl-speech audit
+uv run fdl-speech package
 ```
 
 The first three commands require no dataset. The download is resumable and the preparation
-commands may be rerun safely.
+commands may be rerun safely. `finalize` is the deliberate one-time test-set gate: it reads
+the frozen validation selection, promotes the chosen run, and only then evaluates the test
+split. `package` refuses to build a submission when the audit fails or Git is dirty.
 
 ## Expected evidence
 
@@ -50,6 +56,15 @@ After final evaluation:
 - predictions and class report; clean and normalized confusion matrices; calibration bins and
   reliability plot; bootstrap confidence intervals; robustness table/figure; latency and size;
   selected WAV clips and spectrograms for qualitative inspection.
+
+After reporting and packaging:
+
+- `docs/final_report.md` and `docs/model_card.md`: generated scientific narrative and model facts.
+- `presentation/FDL_Speech_Commands.pptx` and `.pdf`: editable and submission-ready decks.
+- `presentation/presentation_script.md`: timed 15-minute, three-speaker script.
+- `presentation/q_and_a.md`: defence preparation grounded in the recorded results.
+- `submission/fdl_speech_commands_elearning.zip`: clean, audited eLearning upload bundle.
+- `submission/audit.json`: machine-readable preflight result and file hashes.
 
 ## Reproduction levels
 

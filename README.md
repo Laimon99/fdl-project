@@ -61,8 +61,9 @@ calibration, efficiency, and qualitative test evaluation.
 - `configs/`: immutable experiment definitions.
 - `tests/`: unit and data-integrity tests.
 - `artifacts/`: committed figures, tables, metrics, model files, and predictions.
-- `docs/`: data card, experiment protocol, model card, reproducibility guide, and talk script.
-- `presentation/`: editable PowerPoint and required PDF export.
+- `docs/`: data card, experiment protocol, model card, final report, reproducibility guide,
+  demo guide, and submission checklist.
+- `presentation/`: editable PowerPoint, required PDF export, timed talk script, and defence Q&A.
 
 ## Scientific protocol
 
@@ -76,14 +77,16 @@ calibration, efficiency, and qualitative test evaluation.
 
 ## Dataset and attribution
 
-Speech Commands v0.01 contains 64,727 one-second-or-shorter WAV recordings of 30
-spoken words. It was created by Google and released under CC BY 4.0. The dataset is
-downloaded from its original TensorFlow URL; it is never redistributed in this repo.
-See `CITATION.cff`, `docs/data_card.md`, and the dataset `LICENSE` after download.
+Speech Commands v0.01 contains 64,721 one-second-or-shorter spoken-word clips across
+30 words, plus six longer background-noise recordings. It was created by Google and
+released under CC BY 4.0. The dataset is downloaded from its original TensorFlow URL;
+it is never redistributed in this repo. See `CITATION.cff`, `docs/data_card.md`, and
+the dataset `LICENSE` after download.
 
 ## Submission
 
 The final eLearning package must contain the Python code, trained weights, and the
 presentation **as a PDF file**. The presentation and oral discussion are in English.
 The internal deadline is kept earlier than the official deadline of 8 September 2026,
-23:59 Europe/Rome, to leave time for the group review.
+23:59 Europe/Rome, to leave time for the group review. The exact requirement-to-file
+mapping and the manual upload procedure are in `docs/submission_checklist.md`.

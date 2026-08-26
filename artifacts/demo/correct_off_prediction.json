@@ -1,0 +1,19 @@
+{
+  "audio_path": "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_audio/uncertain_correct_scv1-027703.wav",
+  "confidence": 0.18967154622077942,
+  "predicted_label": "off",
+  "top_3": [
+    {
+      "label": "off",
+      "probability": 0.18967154622077942
+    },
+    {
+      "label": "down",
+      "probability": 0.1871705800294876
+    },
+    {
+      "label": "_unknown_",
+      "probability": 0.15310773253440857
+    }
+  ]
+}
