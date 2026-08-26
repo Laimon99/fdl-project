@@ -137,8 +137,6 @@ def build_dataset(
     options = tf.data.Options()
     options.experimental_deterministic = True
     dataset = dataset.with_options(options)
-    if training:
-        dataset = dataset.shuffle(len(subset), seed=seed, reshuffle_each_iteration=True)
 
     noise_bank = None
     if (training and augmentation_config is not None) or corruption_snr_db is not None:
@@ -190,6 +188,12 @@ def build_dataset(
         return features, record["label"]
 
     dataset = dataset.map(transform, num_parallel_calls=tf.data.AUTOTUNE, deterministic=True)
+    if augmentation_config is None and corruption_snr_db is None and time_shift_samples == 0:
+        # Cache deterministic features, not augmented examples. Validation is consumed several
+        # times per epoch and unaugmented training features are reused across all epochs.
+        dataset = dataset.cache()
+    if training:
+        dataset = dataset.shuffle(len(subset), seed=seed, reshuffle_each_iteration=True)
     dataset = dataset.batch(batch_size, drop_remainder=False)
     dataset = dataset.prefetch(tf.data.AUTOTUNE)
     return dataset

@@ -104,15 +104,17 @@ def train_experiment(
         training=False,
         seed=config.seed,
     )
-    normalization_dataset = build_dataset(
-        manifest,
-        config.raw_dir,
-        config.features,
-        split="training",
-        batch_size=config.training.batch_size,
-        training=False,
-        seed=config.seed,
-    )
+    normalization_dataset = train_dataset
+    if augmentation is not None:
+        normalization_dataset = build_dataset(
+            manifest,
+            config.raw_dir,
+            config.features,
+            split="training",
+            batch_size=config.training.batch_size,
+            training=False,
+            seed=config.seed,
+        )
 
     model, normalizer = build_model(feature_shape(config.features), config.model)
     console.print("Adapting normalization statistics on the unaugmented training split...")
