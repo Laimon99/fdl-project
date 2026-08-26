@@ -7,12 +7,16 @@ import numpy as np
 import pandas as pd
 import soundfile as sf
 import tensorflow as tf
+from rich.console import Console
 
 from .augmentation import augment_waveform, spec_augment
 from .config import AugmentationConfig, FeatureConfig
 from .constants import BACKGROUND_NOISE_DIR, CLIP_SAMPLES
 from .features import extract_features
 from .utils import ProjectError
+
+console = Console()
+_WAVEFORM_TENSOR_CACHE: dict[tuple[str, str, int], tf.Tensor] = {}
 
 
 def read_manifest(path: str | Path) -> pd.DataFrame:
@@ -61,6 +65,39 @@ def _decode_record(
     return tf.ensure_shape(waveform, [clip_samples])
 
 
+def _load_waveform_tensor(
+    subset: pd.DataFrame,
+    raw_dir: Path,
+    split: str,
+    clip_samples: int,
+) -> tf.Tensor:
+    """Load selected PCM16 clips once, avoiding repeated small-file I/O every epoch."""
+    key = (str(raw_dir.resolve()), split, clip_samples)
+    if key in _WAVEFORM_TENSOR_CACHE:
+        return _WAVEFORM_TENSOR_CACHE[key]
+    console.print(
+        f"Caching {len(subset):,} {split} waveforms as PCM16 "
+        f"({len(subset) * clip_samples * 2 / 2**20:.0f} MiB)..."
+    )
+    waveforms = np.zeros((len(subset), clip_samples), dtype=np.int16)
+    for index, row in enumerate(subset.itertuples(index=False)):
+        audio, sample_rate = sf.read(
+            raw_dir / row.path,
+            dtype="int16",
+            always_2d=False,
+        )
+        if sample_rate != 16_000:
+            raise ProjectError(f"Unexpected sample rate in {row.path}: {sample_rate}")
+        if audio.ndim != 1:
+            audio = np.mean(audio.astype(np.float32), axis=-1).astype(np.int16)
+        offset = int(row.offset_samples) if row.source_type == "background_slice" else 0
+        clip = audio[offset : offset + clip_samples]
+        waveforms[index, : len(clip)] = clip
+    tensor = tf.convert_to_tensor(waveforms)
+    _WAVEFORM_TENSOR_CACHE[key] = tensor
+    return tensor
+
+
 def build_dataset(
     manifest: pd.DataFrame,
     raw_dir: str | Path,
@@ -73,6 +110,7 @@ def build_dataset(
     include_metadata: bool = False,
     corruption_snr_db: float | None = None,
     time_shift_samples: int = 0,
+    cache_waveforms: bool = True,
 ) -> tf.data.Dataset:
     subset = manifest.loc[manifest["split"] == split].reset_index(drop=True)
     if subset.empty:
@@ -91,6 +129,10 @@ def build_dataset(
         "label": labels,
         "example_id": example_ids,
     }
+    if cache_waveforms:
+        tensors["waveform_int16"] = _load_waveform_tensor(
+            subset, root, split, feature_config.clip_samples
+        )
     dataset = tf.data.Dataset.from_tensor_slices(tensors)
     options = tf.data.Options()
     options.experimental_deterministic = True
@@ -103,12 +145,16 @@ def build_dataset(
         noise_bank = load_noise_bank(root, feature_config.clip_samples)
 
     def transform(record: dict[str, tf.Tensor]):
-        waveform = _decode_record(
-            record["path"],
-            record["source_type"],
-            record["offset_samples"],
-            feature_config.clip_samples,
-        )
+        if cache_waveforms:
+            waveform = tf.cast(record["waveform_int16"], tf.float32) / 32_768.0
+            waveform = tf.ensure_shape(waveform, [feature_config.clip_samples])
+        else:
+            waveform = _decode_record(
+                record["path"],
+                record["source_type"],
+                record["offset_samples"],
+                feature_config.clip_samples,
+            )
         if training and augmentation_config is not None:
             waveform = augment_waveform(waveform, noise_bank, feature_config, augmentation_config)
         if time_shift_samples:
