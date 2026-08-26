@@ -26,6 +26,7 @@ from .evaluation import build_leaderboard, evaluate_run, promote_best_model
 from .features import extract_features, feature_shape
 from .inference import predict_file
 from .models import build_model
+from .reporting import generate_final_report
 from .training import repeat_selected_seeds, train_all, train_experiment
 from .utils import ProjectError, runtime_metadata, set_global_determinism
 
@@ -140,6 +141,12 @@ def finalize_command(
     model, run_dir = promote_best_model()
     console.print(f"[green]Promoted[/] {run_dir.name} -> {model}")
     evaluate_run(run_dir, "testing", bootstrap_resamples, robustness=True)
+
+
+@app.command("report")
+def report_command() -> None:
+    """Generate the final technical report and finalized model card from artifacts."""
+    console.print(f"[green]Report written:[/] {generate_final_report()}")
 
 
 @app.command("infer")

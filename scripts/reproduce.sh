@@ -11,5 +11,6 @@ uv run fdl-speech train-all
 uv run fdl-speech leaderboard
 uv run fdl-speech repeat-best
 uv run fdl-speech finalize
+uv run fdl-speech report
 
 echo "Full experiment and final frozen-test evaluation complete."
