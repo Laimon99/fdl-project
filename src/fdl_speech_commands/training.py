@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import tempfile
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -27,6 +28,27 @@ from .utils import (
 )
 
 console = Console()
+
+
+def tensorboard_log_dir(
+    run_dir: Path,
+    *,
+    platform_name: str | None = None,
+    temporary_root: Path | None = None,
+) -> Path:
+    """Return a TensorBoard path that TensorFlow can open on every supported platform.
+
+    Native-Windows TensorFlow 2.21 cannot create summary writers below paths containing
+    non-ASCII characters. The project itself may legitimately live below such a path (for
+    example ``Università``), so only the transient TensorBoard events are redirected to the
+    user's ASCII-safe temporary directory. All submission artifacts stay in the repository.
+    """
+    preferred = run_dir / "tensorboard"
+    active_platform = platform_name or __import__("sys").platform
+    if active_platform != "win32" or str(preferred).isascii():
+        return preferred
+    root = temporary_root or Path(tempfile.gettempdir())
+    return root / "fdl_speech_commands_tensorboard" / run_dir.name
 
 
 class ValidationMetrics(keras.callbacks.Callback):
@@ -126,6 +148,15 @@ def train_experiment(
         yaml.safe_dump(config.as_dict(), stream, sort_keys=False)
 
     checkpoint = run_dir / "best_model.keras"
+    tensorboard_dir = tensorboard_log_dir(run_dir)
+    if tensorboard_dir.parent != run_dir:
+        console.print(
+            "[yellow]TensorBoard events use an ASCII-safe temporary path on Windows:[/] "
+            f"{tensorboard_dir}"
+        )
+    if overwrite and tensorboard_dir.exists():
+        shutil.rmtree(tensorboard_dir)
+    ensure_directory(tensorboard_dir)
     callbacks: list[keras.callbacks.Callback] = [
         ValidationMetrics(validation_dataset),
         keras.callbacks.ModelCheckpoint(
@@ -152,7 +183,7 @@ def train_experiment(
         ),
         keras.callbacks.CSVLogger(run_dir / "training_log.csv"),
         keras.callbacks.TensorBoard(
-            log_dir=run_dir / "tensorboard",
+            log_dir=str(tensorboard_dir),
             histogram_freq=0,
             update_freq="epoch",
         ),

@@ -20,6 +20,7 @@ data/cache/
 # Training logs and large transient artifacts
 artifacts/runs/*/tensorboard/
 artifacts/runs/*/checkpoints/
+artifacts/runs/smoke_*/
 tmp/
 submission/*.zip
 submission/audit.json

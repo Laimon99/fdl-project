@@ -1,0 +1,66 @@
+{
+  "counts": {
+    "testing": {
+      "_silence_": 257,
+      "_unknown_": 257,
+      "down": 253,
+      "go": 251,
+      "left": 267,
+      "no": 252,
+      "off": 262,
+      "on": 246,
+      "right": 259,
+      "stop": 249,
+      "up": 272,
+      "yes": 256
+    },
+    "training": {
+      "_silence_": 1854,
+      "_unknown_": 1854,
+      "down": 1842,
+      "go": 1861,
+      "left": 1839,
+      "no": 1853,
+      "off": 1839,
+      "on": 1864,
+      "right": 1852,
+      "stop": 1885,
+      "up": 1843,
+      "yes": 1860
+    },
+    "validation": {
+      "_silence_": 258,
+      "_unknown_": 258,
+      "down": 264,
+      "go": 260,
+      "left": 247,
+      "no": 270,
+      "off": 256,
+      "on": 257,
+      "right": 256,
+      "stop": 246,
+      "up": 260,
+      "yes": 261
+    }
+  },
+  "dataset_version": "v0.01",
+  "examples": 28420,
+  "labels": [
+    "_silence_",
+    "_unknown_",
+    "yes",
+    "no",
+    "up",
+    "down",
+    "left",
+    "right",
+    "on",
+    "off",
+    "stop",
+    "go"
+  ],
+  "manifest_sha256": "50e65284fd78853ad4fab475c645d22af6dfd54e6dbdf8e0d455f6fe0c47a099",
+  "seed": 42,
+  "silence_percentage": 10.0,
+  "unknown_percentage": 10.0
+}

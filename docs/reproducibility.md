@@ -5,6 +5,9 @@
 - Python 3.13 is selected by `.python-version`; Python 3.12 is also tested in CI.
 - Exact Python dependencies are locked in `uv.lock`.
 - TensorFlow runs on CPU on native Windows. CUDA is optional and does not alter the commands.
+- On native Windows, TensorBoard events are redirected to the system temporary directory only
+  when the repository path contains non-ASCII characters, working around a TensorFlow writer
+  limitation. CSV histories, checkpoints, metrics, and every submission artifact remain local.
 - Random sources in Python, NumPy, and TensorFlow are seeded; deterministic TensorFlow ops
   are requested wherever the installed backend supports them.
 
@@ -57,4 +60,3 @@ After final evaluation:
 Small floating-point differences across CPU instruction sets are possible. Scientific
 conclusions are based on validation ranking and repeated-seed statistics, not bitwise-equal
 weights.
-

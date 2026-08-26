@@ -1,0 +1,24 @@
+{
+  "background_recordings": 6,
+  "channels": [
+    1
+  ],
+  "duration_seconds": {
+    "max": 1.0,
+    "median": 1.0,
+    "min": 0.3715625
+  },
+  "modeling_examples": 28420,
+  "modeling_split_counts": {
+    "testing": 3081,
+    "training": 22246,
+    "validation": 3093
+  },
+  "original_words": 30,
+  "raw_speech_recordings": 64721,
+  "sample_rate": [
+    16000
+  ],
+  "speaker_overlap_checked": true,
+  "unique_speakers": 1881
+}
