@@ -1,5 +1,7 @@
 # Speech Commands: robust keyword spotting from scratch
 
+[![quality](https://github.com/Laimon99/fdl-project/actions/workflows/ci.yml/badge.svg)](https://github.com/Laimon99/fdl-project/actions/workflows/ci.yml)
+
 Foundations of Deep Learning project for the 2025/2026 academic year. The project
 studies a reproducible 12-class keyword-spotting task on **Google Speech Commands
 v0.01**: ten commands (`yes`, `no`, `up`, `down`, `left`, `right`, `on`, `off`,
@@ -49,6 +51,20 @@ uv run fdl-speech smoke-test
 | E03 | 40-bin log-Mel | depthwise-separable CNN | none | efficient KWS model |
 | E04 | 40-bin log-Mel | depthwise-separable CNN | waveform + SpecAugment | augmentation ablation |
 | E05 | 40-bin log-Mel | convolutional BiGRU | waveform + SpecAugment | temporal model comparison |
+
+## Main result
+
+The validation-selected E05 CRNN reaches **94.19% accuracy** and **0.9421 macro-F1**
+on the frozen 3,081-example test split. Its stratified-bootstrap macro-F1 95% confidence
+interval is **[0.9338, 0.9501]** over 10,000 resamples. The model has 292,271 parameters,
+occupies 3.42 MiB, and records 3.41 ms median compiled feature-extraction-plus-inference
+latency on the documented CPU environment. At 0 dB background noise, macro-F1 falls to
+0.8146; `unknown` is the weakest clean class at 0.8543 F1. These negative results are part
+of the conclusion, not omitted from the headline.
+
+See the [final report](docs/final_report.md), [model card](docs/model_card.md), and
+[frozen evaluation artifacts](artifacts/runs/e05_logmel_crnn_aug/evaluation_testing) for
+the full quantitative and qualitative evidence.
 
 The best architecture is repeated with three seeds. The test split remains untouched
 until model selection is complete; selection uses validation macro-F1 and accuracy.
