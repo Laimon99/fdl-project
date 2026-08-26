@@ -1,0 +1,12 @@
+{
+  "created_at_utc": "2026-08-26T12:09:17.890490+00:00",
+  "devices": [
+    "/physical_device:CPU:0"
+  ],
+  "git_revision": "47ac9e4773817fba9f189144d796bce81e42384a",
+  "keras": "3.15.1",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 158 Stepping 10, GenuineIntel",
+  "python": "3.13.13 (main, Jun  2 2026, 22:38:31) [MSC v.1944 64 bit (AMD64)]",
+  "tensorflow": "2.21.0"
+}

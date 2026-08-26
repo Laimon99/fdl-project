@@ -1,4 +1,5 @@
 experiment_id,features,model,augmentation,accuracy,epochs_completed,macro_f1,parameters
+e05_logmel_crnn_aug,log_mel,crnn,True,0.9421273844164242,38,0.9427125518843879,292271
 e03_logmel_dscnn,log_mel,ds_cnn,False,0.9321047526673133,27,0.9323602508455787,46863
 e04_logmel_dscnn_aug,log_mel,ds_cnn,True,0.9043000323310701,36,0.9049880561596458,46863
 e02_logmel_cnn,log_mel,small_cnn,False,0.8771419333979955,40,0.8759249802145804,76463
