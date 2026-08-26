@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 import tempfile
 from dataclasses import replace
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 
 import numpy as np
@@ -48,7 +48,10 @@ def tensorboard_log_dir(
     if active_platform != "win32" or str(preferred).isascii():
         return preferred
     root = temporary_root or Path(tempfile.gettempdir())
-    return root / "fdl_speech_commands_tensorboard" / run_dir.name
+    # The helper is unit-tested on Linux with a simulated Windows path. Parse the run name
+    # with Windows semantics explicitly instead of inheriting the host OS's path rules.
+    run_name = PureWindowsPath(str(run_dir)).name
+    return root / "fdl_speech_commands_tensorboard" / run_name
 
 
 class ValidationMetrics(keras.callbacks.Callback):
