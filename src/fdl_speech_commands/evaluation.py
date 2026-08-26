@@ -131,7 +131,7 @@ def _plot_confusion(labels: np.ndarray, predictions: np.ndarray, output: Path) -
             yticklabels=LABELS,
             square=True,
             cbar=False,
-            axis=axis,
+            ax=axis,
             annot_kws={"size": 8},
         )
         axis.set_xlabel("Predicted label")

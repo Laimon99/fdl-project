@@ -1,0 +1,38 @@
+{
+  "accuracy": 0.9419019798766635,
+  "balanced_accuracy": 0.9417432960991104,
+  "bootstrap_confidence_intervals": {
+    "accuracy": {
+      "lower_95": 0.9334631613112626,
+      "point": 0.9419019798766635,
+      "upper_95": 0.9500162284972412
+    },
+    "macro_f1": {
+      "lower_95": 0.9338149632862299,
+      "point": 0.9420819679041256,
+      "upper_95": 0.9500633132269328
+    },
+    "resamples": 10000,
+    "seed": 2026
+  },
+  "examples": 3081,
+  "expected_calibration_error_15_bins": 0.01978715564070176,
+  "latency": {
+    "batch_size": 1,
+    "mean_ms": 3.4523069998977007,
+    "median_ms": 3.40919999871403,
+    "model_only_median_ms": 3.504050000628922,
+    "model_only_p95_ms": 4.23130500348634,
+    "p95_ms": 3.8473800064821257,
+    "repeats": 200,
+    "scope": "compiled feature extraction plus neural model on CPU"
+  },
+  "macro_f1": 0.9420819679041256,
+  "macro_precision": 0.9433694317163891,
+  "macro_recall": 0.9417432960991104,
+  "model_size_bytes": 3585023,
+  "negative_log_likelihood": 0.22740715765565717,
+  "parameters": 292271,
+  "split": "testing",
+  "weighted_f1": 0.9419868275055219
+}
