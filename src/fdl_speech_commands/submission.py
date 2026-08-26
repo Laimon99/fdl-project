@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import subprocess
 import zipfile
 from dataclasses import asdict, dataclass
@@ -47,6 +48,31 @@ FINAL_REQUIRED_FILES = (
     "presentation/q_and_a.md",
 )
 
+PLACEHOLDER_MARKERS = ("TBD", "TODO", "PLACEHOLDER", "INSERT ")
+
+
+def _contains_placeholder(text: str) -> bool:
+    normalized = text.upper()
+    return any(marker in normalized for marker in PLACEHOLDER_MARKERS)
+
+
+def _pptx_contains_placeholder(path: Path) -> bool:
+    """Inspect visible slide and speaker-note text without requiring PowerPoint."""
+
+    with zipfile.ZipFile(path) as archive:
+        relevant = re.compile(
+            r"ppt/(?:slides/slide|notesSlides/notesSlide)\d+\.xml$"
+        )
+        for name in archive.namelist():
+            if not relevant.fullmatch(name):
+                continue
+            xml = archive.read(name).decode("utf-8", errors="replace")
+            # Text can be split across multiple DrawingML runs, so remove tags before scanning.
+            visible_text = re.sub(r"<[^>]+>", " ", xml)
+            if _contains_placeholder(visible_text):
+                return True
+    return False
+
 
 def _check_required_files() -> AuditCheck:
     missing = [path for path in FINAL_REQUIRED_FILES if not (PROJECT_ROOT / path).is_file()]
@@ -58,7 +84,6 @@ def _check_required_files() -> AuditCheck:
 
 
 def _check_placeholders() -> AuditCheck:
-    markers = ("TBD", "TODO", "PLACEHOLDER", "INSERT ")
     offenders: list[str] = []
     paths = [PROJECT_ROOT / "README.md"]
     paths.extend((PROJECT_ROOT / "docs").glob("*.md"))
@@ -66,9 +91,17 @@ def _check_placeholders() -> AuditCheck:
     for path in paths:
         if not path.is_file():
             continue
-        text = path.read_text(encoding="utf-8").upper()
-        if any(marker in text for marker in markers):
+        text = path.read_text(encoding="utf-8")
+        if _contains_placeholder(text):
             offenders.append(path.relative_to(PROJECT_ROOT).as_posix())
+
+    pptx = PROJECT_ROOT / "presentation" / "FDL_Speech_Commands.pptx"
+    if pptx.is_file():
+        try:
+            if _pptx_contains_placeholder(pptx):
+                offenders.append(pptx.relative_to(PROJECT_ROOT).as_posix())
+        except (OSError, zipfile.BadZipFile):
+            offenders.append(pptx.relative_to(PROJECT_ROOT).as_posix())
     return AuditCheck(
         "no unresolved placeholders",
         not offenders,
@@ -137,15 +170,24 @@ def _check_presentation_signatures() -> AuditCheck:
     pdf = PROJECT_ROOT / "presentation" / "FDL_Speech_Commands.pdf"
     if not pptx.exists() or not pdf.exists():
         return AuditCheck("presentation files", False, "PPTX or PDF missing")
-    with pptx.open("rb") as stream:
-        pptx_ok = stream.read(2) == b"PK"
-    with pdf.open("rb") as stream:
-        pdf_ok = stream.read(5) == b"%PDF-"
-    return AuditCheck(
-        "presentation files",
-        pptx_ok and pdf_ok,
-        f"PPTX={pptx.stat().st_size / 2**20:.2f} MiB; PDF={pdf.stat().st_size / 2**20:.2f} MiB",
-    )
+    try:
+        with zipfile.ZipFile(pptx) as archive:
+            slide_count = sum(
+                bool(re.fullmatch(r"ppt/slides/slide\d+\.xml", name))
+                for name in archive.namelist()
+            )
+        pdf_bytes = pdf.read_bytes()
+        pdf_ok = pdf_bytes.startswith(b"%PDF-")
+        pdf_page_count = len(re.findall(rb"/Type\s*/Page\b", pdf_bytes))
+        passed = slide_count == 15 and pdf_ok and pdf_page_count == slide_count
+        evidence = (
+            f"{slide_count} PPTX slides / {pdf_page_count} PDF pages; "
+            f"PPTX={pptx.stat().st_size / 2**20:.2f} MiB; "
+            f"PDF={pdf.stat().st_size / 2**20:.2f} MiB"
+        )
+        return AuditCheck("presentation files", passed, evidence)
+    except (OSError, zipfile.BadZipFile) as error:
+        return AuditCheck("presentation files", False, str(error))
 
 
 def audit_project() -> list[AuditCheck]:
