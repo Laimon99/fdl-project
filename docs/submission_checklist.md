@@ -47,7 +47,7 @@ versioned submission material and a SHA-256 manifest.
 
 When the technical work is ready but the three full author identities have not yet been
 provided, `uv run fdl-speech package --review` creates an explicitly labelled review bundle.
-Review mode waives only the known identity fields; missing artifacts, unrelated TODOs, dirty
+Review mode waives only the known identity fields; missing artifacts, unrelated unfinished markers, dirty
 Git state, invalid models, leakage, or presentation problems still block packaging. The review
 ZIP records the failed identity audit in its manifest and **must not be uploaded to eLearning**.
 After personalization, run the strict `audit` and `package` commands without `--review`.
