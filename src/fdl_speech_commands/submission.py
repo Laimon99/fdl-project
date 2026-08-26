@@ -30,25 +30,73 @@ class AuditCheck:
 
 
 FINAL_REQUIRED_FILES = (
+    "README.md",
+    "LICENSE",
+    "CITATION.cff",
+    "pyproject.toml",
+    "uv.lock",
+    "configs/e01_mfcc_mlp.yaml",
+    "configs/e02_logmel_cnn.yaml",
+    "configs/e03_logmel_dscnn.yaml",
+    "configs/e04_logmel_dscnn_aug.yaml",
+    "configs/e05_logmel_crnn_aug.yaml",
     "data/processed/dataset_source.json",
     "data/processed/raw_inventory.csv",
     "data/processed/manifest.csv",
     "data/processed/manifest.metadata.json",
     "artifacts/tables/eda_summary.json",
     "artifacts/tables/experiment_leaderboard.csv",
+    "artifacts/tables/robustness_ablation_validation.csv",
     "artifacts/tables/seed_stability_validation.summary.json",
+    "artifacts/figures/eda/class_spectrogram_examples.png",
+    "artifacts/figures/eda/duration_and_energy.png",
+    "artifacts/figures/experiment_leaderboard.png",
+    "artifacts/figures/robustness_ablation_validation.png",
     "artifacts/models/speech_commands_best.keras",
     "artifacts/models/speech_commands_best.yaml",
     "artifacts/models/selection.json",
+    "artifacts/runs/e01_mfcc_mlp/best_model.keras",
+    "artifacts/runs/e02_logmel_cnn/best_model.keras",
+    "artifacts/runs/e03_logmel_dscnn/best_model.keras",
+    "artifacts/runs/e04_logmel_dscnn_aug/best_model.keras",
+    "artifacts/runs/e05_logmel_crnn_aug/best_model.keras",
+    "artifacts/runs/e05_logmel_crnn_aug_seed7/best_model.keras",
+    "artifacts/runs/e05_logmel_crnn_aug_seed21/best_model.keras",
+    "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/metrics.json",
+    "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/predictions.csv",
+    "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/classification_report.csv",
+    "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/confusion_matrices.png",
+    "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/reliability_diagram.png",
+    "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/robustness.csv",
+    "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_samples.csv",
+    "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_gallery.png",
+    "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_audio/high_confidence_error_scv1-026775.wav",
+    "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_audio/uncertain_correct_scv1-027703.wav",
+    "docs/data_card.md",
+    "docs/experiment_protocol.md",
     "docs/final_report.md",
     "docs/model_card.md",
+    "docs/reproducibility.md",
+    "docs/demo_guide.md",
+    "docs/submission_checklist.md",
+    "docs/references.bib",
+    "scripts/reproduce.ps1",
+    "scripts/reproduce.sh",
     "presentation/FDL_Speech_Commands.pptx",
     "presentation/FDL_Speech_Commands.pdf",
+    "presentation/README.md",
     "presentation/presentation_script.md",
     "presentation/q_and_a.md",
 )
 
-PLACEHOLDER_MARKERS = ("TBD", "TODO", "PLACEHOLDER", "INSERT ")
+PLACEHOLDER_MARKERS = (
+    "TBD",
+    "TODO",
+    "PLACEHOLDER",
+    "INSERT ",
+    "THIRD GROUP MEMBER",
+    "FOUNDATIONS OF DEEP LEARNING PROJECT GROUP",
+)
 
 
 def _contains_placeholder(text: str) -> bool:
@@ -85,7 +133,11 @@ def _check_required_files() -> AuditCheck:
 
 def _check_placeholders() -> AuditCheck:
     offenders: list[str] = []
-    paths = [PROJECT_ROOT / "README.md"]
+    paths = [
+        PROJECT_ROOT / "README.md",
+        PROJECT_ROOT / "CITATION.cff",
+        PROJECT_ROOT / "pyproject.toml",
+    ]
     paths.extend((PROJECT_ROOT / "docs").glob("*.md"))
     paths.extend((PROJECT_ROOT / "presentation").glob("*.md"))
     for path in paths:
