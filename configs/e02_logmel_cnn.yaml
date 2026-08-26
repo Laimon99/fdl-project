@@ -1,0 +1,26 @@
+experiment:
+  id: e02_logmel_cnn
+  seed: 42
+data:
+  manifest: data/processed/manifest.csv
+  raw_dir: data/raw/speech_commands_v0.01
+features:
+  kind: log_mel
+  sample_rate: 16000
+  clip_samples: 16000
+  frame_length: 480
+  frame_step: 160
+  fft_length: 512
+  mel_bins: 40
+  mfcc_bins: 13
+model:
+  name: small_cnn
+  dropout: 0.3
+training:
+  batch_size: 128
+  epochs: 40
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  patience: 8
+  augment: false
+

@@ -1,0 +1,37 @@
+experiment:
+  id: e05_logmel_crnn_aug
+  seed: 42
+data:
+  manifest: data/processed/manifest.csv
+  raw_dir: data/raw/speech_commands_v0.01
+features:
+  kind: log_mel
+  sample_rate: 16000
+  clip_samples: 16000
+  frame_length: 480
+  frame_step: 160
+  fft_length: 512
+  mel_bins: 40
+  mfcc_bins: 13
+model:
+  name: crnn
+  dropout: 0.35
+training:
+  batch_size: 96
+  epochs: 50
+  learning_rate: 0.0008
+  weight_decay: 0.0001
+  patience: 10
+  augment: true
+augmentation:
+  max_shift_ms: 100
+  gain_min: 0.7
+  gain_max: 1.3
+  noise_probability: 0.8
+  snr_db_min: 5.0
+  snr_db_max: 25.0
+  time_masks: 2
+  time_mask_max: 10
+  frequency_masks: 2
+  frequency_mask_max: 5
+

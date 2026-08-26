@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this project, please cite both the project and Speech Commands."
+title: "Robust keyword spotting on Speech Commands v0.01"
+type: software
+version: 0.1.0
+date-released: 2026-09-08
+authors:
+  - name: "Foundations of Deep Learning project group"
+references:
+  - type: article
+    title: "Speech Commands: A Dataset for Limited-Vocabulary Speech Recognition"
+    authors:
+      - family-names: Warden
+        given-names: Pete
+    year: 2018
+    doi: "10.48550/arXiv.1804.03209"
+

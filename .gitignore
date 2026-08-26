@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environments and editors
+.venv/
+.idea/
+.vscode/
+
+# Raw and derived data
+data/downloads/
+data/raw/
+data/processed/
+data/cache/
+
+# Training logs and large transient artifacts
+artifacts/runs/*/tensorboard/
+artifacts/runs/*/checkpoints/
+tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
