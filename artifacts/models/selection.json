@@ -1,0 +1,14 @@
+{
+  "criterion": "validation macro-F1; validation accuracy tie-breaker",
+  "selected_experiment": "e05_logmel_crnn_aug",
+  "validation_metrics": {
+    "accuracy": 0.9421273844164242,
+    "augmentation": true,
+    "epochs_completed": 38,
+    "experiment_id": "e05_logmel_crnn_aug",
+    "features": "log_mel",
+    "macro_f1": 0.9427125518843879,
+    "model": "crnn",
+    "parameters": 292271
+  }
+}
