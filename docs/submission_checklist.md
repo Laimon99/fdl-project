@@ -45,6 +45,13 @@ The audit checks the manifest, final model, presentation file signatures, mandat
 unresolved identity tokens, and Git cleanliness. The packager writes a ZIP containing the
 versioned submission material and a SHA-256 manifest.
 
+When the technical work is ready but the three full author identities have not yet been
+provided, `uv run fdl-speech package --review` creates an explicitly labelled review bundle.
+Review mode waives only the known identity fields; missing artifacts, unrelated TODOs, dirty
+Git state, invalid models, leakage, or presentation problems still block packaging. The review
+ZIP records the failed identity audit in its manifest and **must not be uploaded to eLearning**.
+After personalization, run the strict `audit` and `package` commands without `--review`.
+
 ## Manual eLearning procedure
 
 1. Fill in every group member's full name and rehearse the final script with all three members.

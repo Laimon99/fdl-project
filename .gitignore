@@ -23,7 +23,7 @@ artifacts/runs/*/checkpoints/
 artifacts/runs/smoke_*/
 tmp/
 submission/*.zip
-submission/audit.json
+submission/*audit.json
 
 # OS files
 .DS_Store

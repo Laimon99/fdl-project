@@ -98,6 +98,14 @@ PLACEHOLDER_MARKERS = (
     "FOUNDATIONS OF DEEP LEARNING PROJECT GROUP",
 )
 
+AUTHOR_PLACEHOLDER_FILES = {
+    "CITATION.cff",
+    "pyproject.toml",
+    "presentation/FDL_Speech_Commands.pptx",
+    "presentation/README.md",
+    "presentation/presentation_script.md",
+}
+
 
 def _contains_placeholder(text: str) -> bool:
     normalized = text.upper()
@@ -267,14 +275,40 @@ def print_audit(checks: list[AuditCheck]) -> None:
     console.print(table)
 
 
+def _blocking_failures(
+    checks: list[AuditCheck], *, review_mode: bool = False
+) -> list[AuditCheck]:
+    failures = [check for check in checks if not check.passed]
+    if not review_mode:
+        return failures
+
+    blocking: list[AuditCheck] = []
+    for check in failures:
+        if check.name != "no unresolved placeholders":
+            blocking.append(check)
+            continue
+        offenders = {value.strip() for value in check.evidence.split(",") if value.strip()}
+        if not offenders or not offenders.issubset(AUTHOR_PLACEHOLDER_FILES):
+            blocking.append(check)
+    return blocking
+
+
 def package_submission(
     output: str | Path = PROJECT_ROOT / "submission" / "fdl_speech_commands_elearning.zip",
+    *,
+    review_mode: bool = False,
 ) -> Path:
     checks = audit_project()
     print_audit(checks)
-    failures = [check for check in checks if not check.passed]
+    failures = _blocking_failures(checks, review_mode=review_mode)
     if failures:
         raise ProjectError("Submission package refused: final audit contains failures")
+
+    if review_mode:
+        console.print(
+            "[yellow]Review mode:[/] only the known author-identity fields may remain; "
+            "this archive must not be uploaded before personalization and a strict audit."
+        )
 
     tracked_raw = subprocess.check_output(
         ["git", "ls-files", "-z"], cwd=PROJECT_ROOT
@@ -301,6 +335,12 @@ def package_submission(
             )
         manifest = {
             "git_commit": commit,
+            "package_mode": "review" if review_mode else "final",
+            "remaining_action": (
+                "Replace the three author identities, regenerate PPTX/PDF, and pass strict audit."
+                if review_mode
+                else None
+            ),
             "files": entries,
             "audit": [asdict(check) for check in checks],
         }
@@ -308,7 +348,8 @@ def package_submission(
         json.dump(manifest, buffer, indent=2, sort_keys=True)
         archive.writestr("SUBMISSION_MANIFEST.json", buffer.getvalue() + "\n")
 
-    write_json(output.parent / "audit.json", [asdict(check) for check in checks])
+    audit_name = "review_audit.json" if review_mode else "audit.json"
+    write_json(output.parent / audit_name, [asdict(check) for check in checks])
     digest = sha256_file(output)
     console.print(f"[green]Submission package:[/] {output}")
     console.print(f"SHA-256: {digest}")

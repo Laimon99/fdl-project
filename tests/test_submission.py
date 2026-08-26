@@ -1,7 +1,12 @@
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
-from fdl_speech_commands.submission import _contains_placeholder, _pptx_contains_placeholder
+from fdl_speech_commands.submission import (
+    AuditCheck,
+    _blocking_failures,
+    _contains_placeholder,
+    _pptx_contains_placeholder,
+)
 
 
 def _write_minimal_pptx(path: Path, text: str) -> None:
@@ -29,3 +34,18 @@ def test_pptx_placeholder_detection_reads_slide_xml(tmp_path: Path) -> None:
 
     assert _pptx_contains_placeholder(incomplete)
     assert not _pptx_contains_placeholder(complete)
+
+
+def test_review_mode_only_waives_known_author_files() -> None:
+    identity_only = AuditCheck(
+        "no unresolved placeholders",
+        False,
+        "CITATION.cff, presentation/presentation_script.md",
+    )
+    unrelated_todo = AuditCheck("no unresolved placeholders", False, "README.md")
+    dirty_git = AuditCheck("clean Git worktree", False, "M README.md")
+
+    assert _blocking_failures([identity_only], review_mode=True) == []
+    assert _blocking_failures([identity_only]) == [identity_only]
+    assert _blocking_failures([unrelated_todo], review_mode=True) == [unrelated_todo]
+    assert _blocking_failures([dirty_git], review_mode=True) == [dirty_git]

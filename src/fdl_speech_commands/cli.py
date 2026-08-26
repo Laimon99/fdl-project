@@ -171,9 +171,22 @@ def audit_command() -> None:
 
 
 @app.command("package")
-def package_command() -> None:
-    """Create the professor-ready eLearning ZIP after every audit passes."""
-    package_submission()
+def package_command(
+    review: Annotated[
+        bool,
+        typer.Option(
+            "--review",
+            help="Build a review-only ZIP while the three author identities remain unset.",
+        ),
+    ] = False,
+) -> None:
+    """Create the final eLearning ZIP, or an explicitly non-submittable review bundle."""
+    output = (
+        PROJECT_ROOT / "submission" / "fdl_speech_commands_review.zip"
+        if review
+        else PROJECT_ROOT / "submission" / "fdl_speech_commands_elearning.zip"
+    )
+    package_submission(output, review_mode=review)
 
 
 @app.command("infer")
