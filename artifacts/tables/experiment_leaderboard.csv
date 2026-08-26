@@ -1,3 +1,4 @@
 experiment_id,features,model,augmentation,accuracy,epochs_completed,macro_f1,parameters
+e03_logmel_dscnn,log_mel,ds_cnn,False,0.9321047526673133,27,0.9323602508455787,46863
 e02_logmel_cnn,log_mel,small_cnn,False,0.8771419333979955,40,0.8759249802145804,76463
 e01_mfcc_mlp,mfcc,mlp,False,0.8380213385063046,35,0.8390194260090205,361999
