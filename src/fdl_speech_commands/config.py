@@ -110,7 +110,10 @@ class ExperimentConfig:
     def as_dict(self) -> dict[str, Any]:
         return {
             "experiment": {"id": self.experiment_id, "seed": self.seed},
-            "data": {"manifest": str(self.manifest), "raw_dir": str(self.raw_dir)},
+            "data": {
+                "manifest": _portable_path(self.manifest),
+                "raw_dir": _portable_path(self.raw_dir),
+            },
             "features": vars(self.features),
             "model": vars(self.model),
             "training": vars(self.training),
@@ -121,6 +124,13 @@ class ExperimentConfig:
 def _resolve_project_path(value: str | Path) -> Path:
     path = Path(value)
     return path if path.is_absolute() else PROJECT_ROOT / path
+
+
+def _portable_path(value: Path) -> str:
+    try:
+        return value.resolve().relative_to(PROJECT_ROOT.resolve()).as_posix()
+    except ValueError:
+        return str(value.resolve())
 
 
 def load_config(path: str | Path) -> ExperimentConfig:
@@ -143,4 +153,3 @@ def load_config(path: str | Path) -> ExperimentConfig:
     )
     config.validate()
     return config
-

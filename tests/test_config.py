@@ -23,4 +23,4 @@ def test_config_paths_are_project_relative() -> None:
     config = load_config(PROJECT_ROOT / "configs" / "e01_mfcc_mlp.yaml")
     assert config.manifest == PROJECT_ROOT / "data" / "processed" / "manifest.csv"
     assert config.source_path == Path(PROJECT_ROOT / "configs" / "e01_mfcc_mlp.yaml")
-
+    assert config.as_dict()["data"]["manifest"] == "data/processed/manifest.csv"

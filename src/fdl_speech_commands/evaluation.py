@@ -386,7 +386,10 @@ def evaluate_run(
 
 def build_leaderboard(runs_dir: str | Path = PROJECT_ROOT / "artifacts" / "runs") -> pd.DataFrame:
     records: list[dict[str, Any]] = []
+    locked_experiments = {path.stem for path in (PROJECT_ROOT / "configs").glob("e*.yaml")}
     for run_dir in sorted(Path(runs_dir).glob("e*")):
+        if run_dir.name not in locked_experiments:
+            continue
         metrics_path = run_dir / "validation_metrics.json"
         config_path = run_dir / "config_resolved.yaml"
         if not metrics_path.exists() or not config_path.exists():

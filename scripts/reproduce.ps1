@@ -8,7 +8,7 @@ uv run fdl-speech prepare
 uv run fdl-speech eda
 uv run fdl-speech train-all
 uv run fdl-speech leaderboard
-uv run fdl-speech promote
+uv run fdl-speech repeat-best
+uv run fdl-speech finalize
 
-Write-Host "Model selection complete. Evaluate only the selected run shown above."
-
+Write-Host "Full experiment and final frozen-test evaluation complete."

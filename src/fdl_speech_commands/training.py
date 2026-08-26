@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -63,8 +64,15 @@ def train_experiment(
     config_path: str | Path,
     overwrite: bool = False,
     epochs_override: int | None = None,
+    experiment_id_override: str | None = None,
+    seed_override: int | None = None,
 ) -> Path:
     config = load_config(config_path)
+    config = replace(
+        config,
+        experiment_id=experiment_id_override or config.experiment_id,
+        seed=config.seed if seed_override is None else seed_override,
+    )
     run_dir = PROJECT_ROOT / "artifacts" / "runs" / config.experiment_id
     if run_dir.exists() and any(run_dir.iterdir()):
         if not overwrite:
@@ -187,3 +195,48 @@ def train_all(
         raise ProjectError(f"No experiment configs found below {config_dir}")
     return outputs
 
+
+def repeat_selected_seeds(
+    overwrite: bool = False,
+    seeds: tuple[int, ...] = (7, 21, 42),
+) -> pd.DataFrame:
+    """Repeat the validation-selected configuration to quantify seed sensitivity."""
+    from .evaluation import build_leaderboard
+
+    leaderboard = build_leaderboard()
+    best_id = str(leaderboard.iloc[0]["experiment_id"])
+    source_config = PROJECT_ROOT / "configs" / f"{best_id}.yaml"
+    if not source_config.exists():
+        raise ProjectError(f"Cannot locate source config for selected run: {best_id}")
+
+    rows: list[dict[str, Any]] = []
+    for seed in seeds:
+        run_id = best_id if seed == 42 else f"{best_id}_seed{seed}"
+        run_dir = PROJECT_ROOT / "artifacts" / "runs" / run_id
+        if not (run_dir / "validation_metrics.json").exists():
+            train_experiment(
+                source_config,
+                overwrite=overwrite,
+                experiment_id_override=run_id,
+                seed_override=seed,
+            )
+        import json
+
+        with (run_dir / "validation_metrics.json").open("r", encoding="utf-8") as stream:
+            metrics = json.load(stream)
+        rows.append({"selected_config": best_id, "run_id": run_id, "seed": seed, **metrics})
+
+    frame = pd.DataFrame(rows).sort_values("seed")
+    output = PROJECT_ROOT / "artifacts" / "tables" / "seed_stability_validation.csv"
+    ensure_directory(output.parent)
+    frame.to_csv(output, index=False)
+    summary = {
+        "selected_config": best_id,
+        "seeds": list(seeds),
+        "validation_accuracy_mean": frame["accuracy"].mean(),
+        "validation_accuracy_std": frame["accuracy"].std(ddof=1),
+        "validation_macro_f1_mean": frame["macro_f1"].mean(),
+        "validation_macro_f1_std": frame["macro_f1"].std(ddof=1),
+    }
+    write_json(output.with_suffix(".summary.json"), summary)
+    return frame

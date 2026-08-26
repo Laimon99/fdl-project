@@ -26,7 +26,7 @@ from .evaluation import build_leaderboard, evaluate_run, promote_best_model
 from .features import extract_features, feature_shape
 from .inference import predict_file
 from .models import build_model
-from .training import train_all, train_experiment
+from .training import repeat_selected_seeds, train_all, train_experiment
 from .utils import ProjectError, runtime_metadata, set_global_determinism
 
 app = typer.Typer(
@@ -124,6 +124,24 @@ def promote_command() -> None:
     console.print(f"[green]Promoted[/] {run_dir.name} -> {model}")
 
 
+@app.command("repeat-best")
+def repeat_best_command(
+    overwrite: Annotated[bool, typer.Option(help="Replace incomplete repeated-seed runs.")] = False,
+) -> None:
+    """Repeat the validation-selected configuration with three locked seeds."""
+    console.print(repeat_selected_seeds(overwrite=overwrite).to_string(index=False))
+
+
+@app.command("finalize")
+def finalize_command(
+    bootstrap_resamples: Annotated[int, typer.Option(min=100)] = 10_000,
+) -> None:
+    """Promote the selected model and perform its one-time frozen test evaluation."""
+    model, run_dir = promote_best_model()
+    console.print(f"[green]Promoted[/] {run_dir.name} -> {model}")
+    evaluate_run(run_dir, "testing", bootstrap_resamples, robustness=True)
+
+
 @app.command("infer")
 def infer_command(
     audio: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
@@ -174,4 +192,3 @@ def main() -> None:
     except ProjectError as error:
         console.print(f"[bold red]Project error:[/] {error}")
         raise typer.Exit(code=1) from error
-

@@ -22,6 +22,8 @@ uv run fdl-speech prepare
 uv run fdl-speech eda
 uv run fdl-speech train-all
 uv run fdl-speech leaderboard
+uv run fdl-speech repeat-best
+uv run fdl-speech finalize
 ```
 
 Every command is restartable. Raw data and transient caches are ignored by Git;
@@ -46,6 +48,8 @@ uv run fdl-speech smoke-test
 
 The best architecture is repeated with three seeds. The test split remains untouched
 until model selection is complete; selection uses validation macro-F1 and accuracy.
+`finalize` promotes the selected model and performs its one-time clean, robustness,
+calibration, efficiency, and qualitative test evaluation.
 
 ## Repository map
 
@@ -79,4 +83,3 @@ The final eLearning package must contain the Python code, trained weights, and t
 presentation **as a PDF file**. The presentation and oral discussion are in English.
 The internal deadline is kept earlier than the official deadline of 8 September 2026,
 23:59 Europe/Rome, to leave time for the group review.
-
