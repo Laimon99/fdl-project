@@ -32,6 +32,7 @@ from tensorflow import keras
 from .config import ExperimentConfig, load_config
 from .constants import CLIP_SAMPLES, LABELS, PROJECT_ROOT, SAMPLE_RATE
 from .datasets import build_dataset, read_manifest
+from .features import extract_features
 from .utils import ProjectError, ensure_directory, write_json
 
 console = Console()
@@ -232,22 +233,47 @@ def _qualitative_gallery(
     pd.DataFrame(records).to_csv(output_dir / "qualitative_samples.csv", index=False)
 
 
-def _measure_latency(model: keras.Model, dataset: tf.data.Dataset, repeats: int = 200) -> dict[str, float]:
+def _measure_latency(
+    model: keras.Model,
+    dataset: tf.data.Dataset,
+    config: ExperimentConfig,
+    waveform: np.ndarray,
+    repeats: int = 200,
+) -> dict[str, float]:
     features, _ = next(iter(dataset.unbatch().batch(1)))
-    for _ in range(20):
-        _ = model(features, training=False).numpy()
-    timings = []
-    for _ in range(repeats):
-        start = time.perf_counter()
-        _ = model(features, training=False).numpy()
-        timings.append((time.perf_counter() - start) * 1_000)
-    values = np.asarray(timings)
+
+    @tf.function
+    def model_only(batch: tf.Tensor) -> tf.Tensor:
+        return model(batch, training=False)
+
+    @tf.function
+    def end_to_end(single_waveform: tf.Tensor) -> tf.Tensor:
+        extracted = extract_features(single_waveform, config.features)[tf.newaxis]
+        return model(extracted, training=False)
+
+    waveform_tensor = tf.convert_to_tensor(waveform, dtype=tf.float32)
+
+    def time_call(function, argument) -> np.ndarray:
+        for _ in range(20):
+            _ = function(argument).numpy()
+        timings = []
+        for _ in range(repeats):
+            start = time.perf_counter()
+            _ = function(argument).numpy()
+            timings.append((time.perf_counter() - start) * 1_000)
+        return np.asarray(timings)
+
+    model_values = time_call(model_only, features)
+    end_to_end_values = time_call(end_to_end, waveform_tensor)
     return {
         "batch_size": 1,
         "repeats": repeats,
-        "median_ms": float(np.median(values)),
-        "p95_ms": float(np.quantile(values, 0.95)),
-        "mean_ms": float(np.mean(values)),
+        "median_ms": float(np.median(end_to_end_values)),
+        "p95_ms": float(np.quantile(end_to_end_values, 0.95)),
+        "mean_ms": float(np.mean(end_to_end_values)),
+        "model_only_median_ms": float(np.median(model_values)),
+        "model_only_p95_ms": float(np.quantile(model_values, 0.95)),
+        "scope": "compiled feature extraction plus neural model on CPU",
     }
 
 
@@ -372,7 +398,12 @@ def evaluate_run(
         "bootstrap_confidence_intervals": intervals,
         "parameters": model.count_params(),
         "model_size_bytes": model_path.stat().st_size,
-        "latency": _measure_latency(model, dataset),
+        "latency": _measure_latency(
+            model,
+            dataset,
+            config,
+            _load_clip(subset.iloc[0], config.raw_dir),
+        ),
     }
     write_json(output_dir / "metrics.json", metrics)
     _plot_confusion(labels, predicted, output_dir / "confusion_matrices.png")

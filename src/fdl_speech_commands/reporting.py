@@ -95,8 +95,10 @@ architecture selection and does not change the test protocol.
 - Expected calibration error (15 bins): **{metrics['expected_calibration_error_15_bins']:.4f}**.
 - Parameters: **{metrics['parameters']:,}**; serialized size:
   **{metrics['model_size_bytes'] / 2**20:.2f} MiB**.
-- Native CPU batch-1 latency: median **{metrics['latency']['median_ms']:.2f} ms**,
-  p95 **{metrics['latency']['p95_ms']:.2f} ms** on the recorded evaluation machine.
+- Compiled end-to-end CPU batch-1 latency (feature extraction + model): median
+  **{metrics['latency']['median_ms']:.2f} ms**, p95 **{metrics['latency']['p95_ms']:.2f} ms**
+  on the recorded evaluation machine. Model-only median latency is
+  **{metrics['latency']['model_only_median_ms']:.2f} ms**.
 
 ### Per-class results
 
@@ -159,7 +161,9 @@ def _write_final_model_card(
 - Serialized Keras model: {model_size:.2f} MiB at `artifacts/models/speech_commands_best.keras`.
 - Test accuracy: {metrics['accuracy']:.4f}; macro-F1: {metrics['macro_f1']:.4f}.
 - Test calibration ECE: {metrics['expected_calibration_error_15_bins']:.4f}.
-- Native CPU latency: {metrics['latency']['median_ms']:.2f} ms median at batch size one.
+- Compiled end-to-end CPU latency: {metrics['latency']['median_ms']:.2f} ms median at batch size
+  one, including feature extraction; model-only median is
+  {metrics['latency']['model_only_median_ms']:.2f} ms.
 
 ## Intended use
 
