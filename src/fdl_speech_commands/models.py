@@ -85,7 +85,9 @@ def _build_ds_cnn(inputs: tf.Tensor, dropout: float) -> tf.Tensor:
     x = _separable_block(x, 64, (1, 1), "ds_1")
     x = _separable_block(x, 96, (2, 2), "ds_2")
     x = _separable_block(x, 128, (1, 1), "ds_3")
-    x = _separable_block(x, 128, (2, 1), "ds_4")
+    # Equal spatial strides keep TensorFlow's depthwise CPU kernel portable across
+    # Windows and Linux (some backends reject asymmetric depthwise strides).
+    x = _separable_block(x, 128, (2, 2), "ds_4")
     x = layers.GlobalAveragePooling2D(name="global_average_pool")(x)
     return layers.Dropout(dropout, name="head_dropout")(x)
 
@@ -132,4 +134,3 @@ def write_model_summary(model: keras.Model, path: str | Path) -> None:
     lines: list[str] = []
     model.summary(print_fn=lines.append, expand_nested=True, show_trainable=True)
     Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
-
