@@ -22,7 +22,12 @@ from .constants import (
 from .data import download_dataset, prepare_data, validate_manifest
 from .datasets import read_manifest
 from .eda import run_eda
-from .evaluation import build_leaderboard, evaluate_run, promote_best_model
+from .evaluation import (
+    build_leaderboard,
+    compare_validation_robustness,
+    evaluate_run,
+    promote_best_model,
+)
 from .features import extract_features, feature_shape
 from .inference import predict_file
 from .models import build_model
@@ -117,6 +122,12 @@ def evaluate_command(
 def leaderboard_command() -> None:
     """Rank completed experiments using validation results only."""
     console.print(build_leaderboard().to_string(index=False))
+
+
+@app.command("robustness-ablation")
+def robustness_ablation_command() -> None:
+    """Compare selected architecture/augmentation variants on corrupted validation audio."""
+    console.print(compare_validation_robustness().to_string(index=False))
 
 
 @app.command("promote")

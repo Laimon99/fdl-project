@@ -5,7 +5,7 @@ from typing import Any
 
 import pandas as pd
 
-from .constants import PROJECT_ROOT
+from .constants import LABELS, PROJECT_ROOT
 from .utils import ProjectError, read_json
 
 
@@ -16,8 +16,10 @@ def _markdown_table(frame: pd.DataFrame, columns: list[str]) -> str:
     rows = []
     for values in display.itertuples(index=False, name=None):
         formatted = []
-        for value in values:
-            if isinstance(value, float):
+        for column, value in zip(columns, values, strict=True):
+            if column in {"parameters", "support"} and pd.notna(value):
+                formatted.append(f"{int(value):,}")
+            elif isinstance(value, float):
                 formatted.append(f"{value:.4f}")
             else:
                 formatted.append(str(value))
@@ -44,9 +46,73 @@ def generate_final_report(output: str | Path = PROJECT_ROOT / "docs" / "final_re
     evaluation_dir = PROJECT_ROOT / "artifacts" / "runs" / selected_id / "evaluation_testing"
     metrics: dict[str, Any] = read_json(_require(evaluation_dir / "metrics.json"))
     robustness = pd.read_csv(_require(evaluation_dir / "robustness.csv"))
+    robustness_ablation = pd.read_csv(
+        _require(table_dir / "robustness_ablation_validation.csv")
+    )
     classes = pd.read_csv(_require(evaluation_dir / "classification_report.csv"), index_col=0)
-    class_rows = classes.loc[[index for index in classes.index if index.startswith("_") or index.isalpha()]]
+    class_rows = classes.loc[list(LABELS)]
+    predictions = pd.read_csv(_require(evaluation_dir / "predictions.csv"))
     intervals = metrics["bootstrap_confidence_intervals"]
+
+    experiment_rows = leaderboard.set_index("experiment_id")
+    ds_clean = experiment_rows.loc["e03_logmel_dscnn"]
+    ds_augmented = experiment_rows.loc["e04_logmel_dscnn_aug"]
+    selected = experiment_rows.loc[selected_id]
+    parameter_ratio = selected["parameters"] / ds_clean["parameters"]
+    ds_clean_delta = 100 * (ds_augmented["macro_f1"] - ds_clean["macro_f1"])
+    test_delta = 100 * (metrics["macro_f1"] - selected["macro_f1"])
+
+    robustness_order = [
+        "clean",
+        "background_20db",
+        "background_10db",
+        "background_0db",
+        "shift_plus_100ms",
+        "shift_minus_100ms",
+    ]
+    robustness_pivot = robustness_ablation.pivot(
+        index="condition", columns="experiment_id", values="macro_f1"
+    ).loc[robustness_order].reset_index()
+    robustness_pivot.columns.name = None
+    ablation_columns = [
+        "condition",
+        "e03_logmel_dscnn",
+        "e04_logmel_dscnn_aug",
+        "e05_logmel_crnn_aug",
+    ]
+    ablation_index = robustness_ablation.set_index(["experiment_id", "condition"])
+    zero_db_gain = 100 * (
+        ablation_index.loc[("e04_logmel_dscnn_aug", "background_0db"), "macro_f1"]
+        - ablation_index.loc[("e03_logmel_dscnn", "background_0db"), "macro_f1"]
+    )
+
+    robustness_index = robustness.set_index("condition")
+    noise_10db_drop = 100 * (
+        robustness_index.loc["clean", "macro_f1"]
+        - robustness_index.loc["background_10db", "macro_f1"]
+    )
+    noise_0db_drop = 100 * (
+        robustness_index.loc["clean", "macro_f1"]
+        - robustness_index.loc["background_0db", "macro_f1"]
+    )
+    shift_drop = 100 * (
+        robustness_index.loc["clean", "macro_f1"]
+        - min(
+            robustness_index.loc["shift_plus_100ms", "macro_f1"],
+            robustness_index.loc["shift_minus_100ms", "macro_f1"],
+        )
+    )
+
+    errors = predictions.loc[~predictions["correct"].astype(bool)]
+    top_pair = (
+        errors.groupby(["true_label", "predicted_label"])
+        .size()
+        .sort_values(ascending=False)
+    )
+    (top_true, top_predicted), top_pair_count = top_pair.index[0], int(top_pair.iloc[0])
+    weakest_label = str(class_rows["f1-score"].idxmin())
+    weakest_f1 = float(class_rows.loc[weakest_label, "f1-score"])
+    confident_error_floor = float(errors.nlargest(6, "confidence")["confidence"].min())
 
     content = f"""# Final technical report
 
@@ -79,11 +145,27 @@ Normalization statistics are learned only from the training split.
 {_markdown_table(leaderboard, ['experiment_id', 'features', 'model', 'augmentation', 'accuracy', 'macro_f1', 'parameters'])}
 
 The validation-selected configuration is **{selected_id}**. Its three-seed validation
-macro-F1 is **{seed_summary['validation_macro_f1_mean']:.4f} +/-
-{seed_summary['validation_macro_f1_std']:.4f}**; validation accuracy is
-**{seed_summary['validation_accuracy_mean']:.4f} +/-
-{seed_summary['validation_accuracy_std']:.4f}**. This stability check is performed after
+macro-F1 is **{seed_summary['validation_macro_f1_mean']:.4f} ± {seed_summary['validation_macro_f1_std']:.4f}**;
+validation accuracy is **{seed_summary['validation_accuracy_mean']:.4f} ± {seed_summary['validation_accuracy_std']:.4f}**.
+This stability check is performed after
 architecture selection and does not change the test protocol.
+
+The controlled comparison exposes useful trade-offs rather than a single monotonic story.
+The MFCC MLP is the weakest baseline. The compact unaugmented DS-CNN reaches
+{ds_clean['macro_f1']:.4f} macro-F1 with only {int(ds_clean['parameters']):,} parameters.
+Applying the full augmentation recipe to that same architecture changes clean validation
+macro-F1 by **{ds_clean_delta:+.2f} percentage points**. The selected CRNN recovers and exceeds
+the clean DS-CNN, but uses **{parameter_ratio:.2f}x** as many parameters. This accuracy versus
+efficiency trade-off is retained in the conclusion rather than hidden by the final ranking.
+
+### Post-selection robustness ablation (validation)
+
+{_markdown_table(robustness_pivot, ablation_columns)}
+
+This diagnostic is run only after clean-validation selection. It shows why the apparently
+negative DS-CNN augmentation result is still informative: at 0 dB, augmentation improves its
+macro-F1 by **{zero_db_gain:.2f} percentage points**, despite the clean-score cost. The CRNN
+combines the highest clean score with the strongest noise curve among the compared variants.
 
 ## Frozen test evaluation
 
@@ -97,8 +179,11 @@ architecture selection and does not change the test protocol.
   **{metrics['model_size_bytes'] / 2**20:.2f} MiB**.
 - Compiled end-to-end CPU batch-1 latency (feature extraction + model): median
   **{metrics['latency']['median_ms']:.2f} ms**, p95 **{metrics['latency']['p95_ms']:.2f} ms**
-  on the recorded evaluation machine. Model-only median latency is
-  **{metrics['latency']['model_only_median_ms']:.2f} ms**.
+  on the recorded evaluation machine ({metrics['latency']['repeats']} timed repetitions after
+  warm-up).
+
+The validation-to-test macro-F1 change is **{test_delta:+.2f} percentage points**, so the
+selected result transfers to the frozen split without a material generalization drop.
 
 ### Per-class results
 
@@ -109,15 +194,21 @@ architecture selection and does not change the test protocol.
 {_markdown_table(robustness, ['condition', 'accuracy', 'macro_f1'])}
 
 The noise sweep is deterministic and uses held-out temporal regions of the release's own
-background recordings. It is a stress test, not a claim of real-world deployment coverage.
+background recordings. Macro-F1 drops by **{noise_10db_drop:.2f} points** at 10 dB and
+**{noise_0db_drop:.2f} points** at 0 dB, while either ±100 ms shift costs at most
+**{shift_drop:.2f} points**. It is a stress test, not a claim of real-world deployment
+coverage.
 
 ## Qualitative findings
 
 `qualitative_gallery.png` contrasts the six most confident mistakes with six low-confidence
 correct predictions, and `qualitative_samples.csv` links every panel to an exported playable
-WAV. The confusion matrices and these samples are used together: aggregate metrics identify
-systematic class pairs, while listening separates phonetic ambiguity, truncation, low energy,
-background interference, and plausible label uncertainty.
+WAV. The weakest class is **{weakest_label}** (F1 **{weakest_f1:.4f}**), and the most common
+directed error is **{top_true} → {top_predicted}** ({top_pair_count} clips). The six most
+confident errors all have confidence at least **{confident_error_floor:.3f}**. Thus, the low
+aggregate ECE does not eliminate rare overconfident failures—a central negative qualitative
+finding. Listening helps distinguish phonetic ambiguity, truncation, low energy, background
+interference, and plausible label uncertainty.
 
 ## Limitations
 
@@ -167,8 +258,8 @@ def _write_final_model_card(
 - Test accuracy: {metrics['accuracy']:.4f}; macro-F1: {metrics['macro_f1']:.4f}.
 - Test calibration ECE: {metrics['expected_calibration_error_15_bins']:.4f}.
 - Compiled end-to-end CPU latency: {metrics['latency']['median_ms']:.2f} ms median at batch size
-  one, including feature extraction; model-only median is
-  {metrics['latency']['model_only_median_ms']:.2f} ms.
+  one, including feature extraction ({metrics['latency']['repeats']} timed repetitions).
+- Test macro-F1 95% stratified-bootstrap CI: [{metrics['bootstrap_confidence_intervals']['macro_f1']['lower_95']:.4f}, {metrics['bootstrap_confidence_intervals']['macro_f1']['upper_95']:.4f}].
 
 ## Intended use
 
@@ -184,6 +275,13 @@ Architecture selection uses only the official validation split. The frozen selec
 evaluated on the official speaker-disjoint test split with per-class metrics, 10,000-sample
 bootstrap intervals, calibration, efficiency, deterministic noise/time-shift stress tests,
 and auditable qualitative examples.
+
+## Known failure modes
+
+The aggregate `unknown` class is the weakest class, short `down` clips can be confused with
+`no`, and a small number of errors remain highly confident despite low aggregate ECE. Noise
+at 0 dB causes a substantial degradation. Confidence must therefore not be treated as a
+safety guarantee, and deployment needs an explicit rejection/abstention policy.
 
 ## Limitations
 

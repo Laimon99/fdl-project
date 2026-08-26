@@ -1,40 +1,43 @@
 # Model card: Speech Commands keyword spotter
 
-> This card is finalized automatically after model selection. Values marked `TBD` must not
-> appear in the submitted package.
-
 ## Model summary
 
 - Task: classify one second of mono 16 kHz audio into 12 keyword-spotting classes.
-- Input: waveform converted to the feature representation locked by the selected experiment.
-- Output: 12 uncalibrated logits in the label order documented in `data_card.md`.
+- Selected experiment: `e05_logmel_crnn_aug` by validation macro-F1.
 - Framework: TensorFlow 2.21 with Keras 3.15.
-- Selected experiment: **TBD after validation ranking**.
-- Parameters and serialized size: **TBD**.
-
-## Selection and evaluation
-
-Architecture and augmentation are selected by validation macro-F1, with validation accuracy
-as tie-breaker. The test split is used only for the frozen selected model. The final report
-will include:
-
-- clean accuracy and macro-F1 with stratified-bootstrap 95% confidence intervals;
-- precision, recall, and F1 for all classes;
-- calibration and negative log-likelihood;
-- batch-1 CPU latency and serialized size;
-- controlled background-noise and temporal-shift stress tests;
-- qualitative confident errors and ambiguous correct predictions.
+- Parameters: 292,271.
+- Serialized Keras model: 3.42 MiB at `artifacts/models/speech_commands_best.keras`.
+- Test accuracy: 0.9419; macro-F1: 0.9421.
+- Test calibration ECE: 0.0198.
+- Compiled end-to-end CPU latency: 3.41 ms median at batch size
+  one, including feature extraction (200 timed repetitions).
+- Test macro-F1 95% stratified-bootstrap CI: [0.9338, 0.9501].
 
 ## Intended use
 
-The model is an educational keyword spotter and reproducible research artifact. It is suitable
-for comparing compact neural architectures on Speech Commands. It is not suitable for safety-
-critical voice control, authentication, surveillance, speaker recognition, or unrestricted ASR.
+This is an educational, speaker-independent keyword spotter and reproducible research
+artifact. It is appropriate for comparing compact neural architectures on Speech Commands.
+It is not suitable for authentication, surveillance, unrestricted transcription, or
+safety-critical voice control.
 
-## Ethical and technical limitations
+## Data and evaluation
 
-Coverage of accents, microphones, ages, and environments is incomplete and demographic
-metadata is unavailable. Predictions outside the isolated-English-word setting are not
-validated. `unknown` and `silence` are protocol-defined aggregates rather than single natural
-categories. Users should apply a confidence/rejection policy and collect in-domain data before
-any deployment.
+Training uses the 12-class Speech Commands v0.01 protocol documented in `data_card.md`.
+Architecture selection uses only the official validation split. The frozen selected model is
+evaluated on the official speaker-disjoint test split with per-class metrics, 10,000-sample
+bootstrap intervals, calibration, efficiency, deterministic noise/time-shift stress tests,
+and auditable qualitative examples.
+
+## Known failure modes
+
+The aggregate `unknown` class is the weakest class, short `down` clips can be confused with
+`no`, and a small number of errors remain highly confident despite low aggregate ECE. Noise
+at 0 dB causes a substantial degradation. Confidence must therefore not be treated as a
+safety guarantee, and deployment needs an explicit rejection/abstention policy.
+
+## Limitations
+
+Coverage of accents, microphones, ages, and environments is incomplete; demographic metadata
+is unavailable. Inputs outside isolated English words are not validated. `unknown` and
+`silence` are aggregate protocol classes. Deployment would require in-domain collection,
+rejection thresholds, monitoring, and a fresh risk assessment.

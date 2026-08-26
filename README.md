@@ -23,7 +23,11 @@ uv run fdl-speech eda
 uv run fdl-speech train-all
 uv run fdl-speech leaderboard
 uv run fdl-speech repeat-best
+uv run fdl-speech robustness-ablation
 uv run fdl-speech finalize
+uv run fdl-speech report
+uv run fdl-speech audit
+uv run fdl-speech package
 ```
 
 Every command is restartable. Raw data and transient caches are ignored by Git;

@@ -327,6 +327,62 @@ def _robustness_sweep(
     return frame
 
 
+def compare_validation_robustness(
+    run_ids: tuple[str, ...] = (
+        "e03_logmel_dscnn",
+        "e04_logmel_dscnn_aug",
+        "e05_logmel_crnn_aug",
+    ),
+) -> pd.DataFrame:
+    """Compare corruption robustness after clean-validation model selection.
+
+    This diagnostic deliberately uses the validation split. It explains the effect of
+    augmentation without creating additional test-set selection pressure.
+    """
+    frames: list[pd.DataFrame] = []
+    for run_id in run_ids:
+        run_dir = PROJECT_ROOT / "artifacts" / "runs" / run_id
+        model_path = run_dir / "best_model.keras"
+        config_path = run_dir / "config_resolved.yaml"
+        if not model_path.exists() or not config_path.exists():
+            raise ProjectError(f"Missing completed run for robustness ablation: {run_id}")
+        config = load_config(config_path)
+        model = keras.models.load_model(model_path)
+        manifest = read_manifest(config.manifest)
+        output_dir = ensure_directory(run_dir / "evaluation_validation_robustness")
+        frame = _robustness_sweep(model, config, manifest, "validation", output_dir)
+        frame.insert(0, "experiment_id", run_id)
+        frames.append(frame)
+
+    combined = pd.concat(frames, ignore_index=True)
+    table_path = PROJECT_ROOT / "artifacts" / "tables" / "robustness_ablation_validation.csv"
+    ensure_directory(table_path.parent)
+    combined.to_csv(table_path, index=False)
+
+    figure, axis = plt.subplots(figsize=(11, 6), constrained_layout=True)
+    sns.lineplot(
+        data=combined,
+        x="condition",
+        y="macro_f1",
+        hue="experiment_id",
+        marker="o",
+        linewidth=2.5,
+        ax=axis,
+    )
+    axis.set_ylim(0, 1)
+    axis.set_xlabel("")
+    axis.set_ylabel("Validation macro-F1")
+    axis.set_title("Post-selection robustness ablation on validation data")
+    axis.tick_params(axis="x", rotation=25)
+    axis.grid(axis="y", alpha=0.2)
+    axis.legend(title="Experiment", loc="lower left")
+    figure_path = PROJECT_ROOT / "artifacts" / "figures" / "robustness_ablation_validation.png"
+    ensure_directory(figure_path.parent)
+    figure.savefig(figure_path, dpi=180, bbox_inches="tight")
+    plt.close(figure)
+    return combined
+
+
 def evaluate_run(
     run_dir: str | Path,
     split: str = "testing",
