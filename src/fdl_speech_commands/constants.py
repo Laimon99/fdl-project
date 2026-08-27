@@ -37,4 +37,8 @@ DEFAULT_SEED = 42
 UNKNOWN_PERCENTAGE = 10.0
 SILENCE_PERCENTAGE = 10.0
 SPLITS = ("training", "validation", "testing")
-
+BACKGROUND_SPLIT_FRACTIONS = {
+    "training": (0.0, 0.8),
+    "validation": (0.8, 0.9),
+    "testing": (0.9, 1.0),
+}

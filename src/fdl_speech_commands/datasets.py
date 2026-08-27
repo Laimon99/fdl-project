@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Literal
 
@@ -11,13 +12,13 @@ from rich.console import Console
 
 from .augmentation import augment_waveform, spec_augment
 from .config import AugmentationConfig, FeatureConfig
-from .constants import BACKGROUND_NOISE_DIR, CLIP_SAMPLES
+from .constants import BACKGROUND_NOISE_DIR, BACKGROUND_SPLIT_FRACTIONS, CLIP_SAMPLES
 from .features import extract_features
 from .utils import ProjectError
 
 console = Console()
 _WAVEFORM_TENSOR_CACHE: dict[tuple[str, str, int, int, str, str], tf.Tensor] = {}
-_NOISE_BANK_CACHE: dict[tuple[str, int], tf.Tensor] = {}
+_NOISE_BANK_CACHE: dict[tuple[str, str, int], tf.Tensor] = {}
 
 
 def read_manifest(path: str | Path) -> pd.DataFrame:
@@ -29,10 +30,17 @@ def read_manifest(path: str | Path) -> pd.DataFrame:
     return manifest
 
 
-def load_noise_bank(raw_dir: str | Path, clip_samples: int = CLIP_SAMPLES) -> tf.Tensor:
-    key = (str(Path(raw_dir).resolve()), clip_samples)
+def load_noise_bank(
+    raw_dir: str | Path,
+    split: Literal["training", "validation", "testing"],
+    clip_samples: int = CLIP_SAMPLES,
+) -> tf.Tensor:
+    """Load non-overlapping noise clips only from the temporal region reserved for a split."""
+
+    key = (str(Path(raw_dir).resolve()), split, clip_samples)
     if key in _NOISE_BANK_CACHE:
         return _NOISE_BANK_CACHE[key]
+    start_fraction, end_fraction = BACKGROUND_SPLIT_FRACTIONS[split]
     clips: list[np.ndarray] = []
     for path in sorted(Path(raw_dir).joinpath(BACKGROUND_NOISE_DIR).glob("*.wav")):
         audio, sample_rate = sf.read(path, dtype="float32", always_2d=False)
@@ -40,12 +48,15 @@ def load_noise_bank(raw_dir: str | Path, clip_samples: int = CLIP_SAMPLES) -> tf
             raise ProjectError(f"Unexpected noise sample rate in {path}: {sample_rate}")
         if audio.ndim != 1:
             audio = np.mean(audio, axis=-1)
-        for start in range(0, max(1, len(audio) - clip_samples + 1), clip_samples):
+        region_start = math.ceil(len(audio) * start_fraction)
+        region_end = math.floor(len(audio) * end_fraction)
+        latest_start = region_end - clip_samples
+        for start in range(region_start, latest_start + 1, clip_samples):
             clip = audio[start : start + clip_samples]
             if len(clip) == clip_samples:
                 clips.append(clip)
     if not clips:
-        raise ProjectError("No complete background-noise clips were found")
+        raise ProjectError(f"No complete background-noise clips were found for split {split}")
     tensor = tf.convert_to_tensor(np.stack(clips), dtype=tf.float32)
     _NOISE_BANK_CACHE[key] = tensor
     return tensor
@@ -153,7 +164,7 @@ def build_dataset(
 
     noise_bank = None
     if (training and augmentation_config is not None) or corruption_snr_db is not None:
-        noise_bank = load_noise_bank(root, feature_config.clip_samples)
+        noise_bank = load_noise_bank(root, split, feature_config.clip_samples)
 
     def transform(record: dict[str, tf.Tensor]):
         if cache_waveforms:

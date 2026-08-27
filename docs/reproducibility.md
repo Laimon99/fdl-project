@@ -3,6 +3,9 @@
 ## Supported environment
 
 - Python 3.13 is selected by `.python-version`; Python 3.12 is also tested in CI.
+- CI runs linting and unit/synthetic-data tests only. The raw archive is intentionally not
+  stored in Git, so end-to-end preparation, training, and evaluation are verified through
+  the separate full-reproduction procedure below rather than claimed as CI coverage.
 - Exact Python dependencies are locked in `uv.lock`.
 - TensorFlow runs on CPU on native Windows. CUDA is optional and does not alter the commands.
 - On native Windows, TensorBoard events are redirected to the system temporary directory only
@@ -68,7 +71,10 @@ After reporting and packaging:
 
 ## Reproduction levels
 
-- **Integrity check:** `uv run pytest` and `uv run fdl-speech smoke-test`.
+- **CI-equivalent integrity check:** `uv run ruff check .` and
+  `uv run pytest -m "not data"` (unit and synthetic-data coverage; no raw archive).
+- **Local data-pipeline smoke check:** `uv run fdl-speech smoke-test` after downloading and
+  preparing the official release.
 - **Fast training check:** add `--epochs 1` to `train` for one configuration.
 - **Full reproduction:** use the locked epoch/early-stopping settings without overrides.
 

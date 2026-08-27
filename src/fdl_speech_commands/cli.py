@@ -139,7 +139,7 @@ def promote_command() -> None:
 
 @app.command("repeat-best")
 def repeat_best_command(
-    overwrite: Annotated[bool, typer.Option(help="Replace incomplete repeated-seed runs.")] = False,
+    overwrite: Annotated[bool, typer.Option(help="Retrain and replace repeated-seed runs.")] = False,
 ) -> None:
     """Repeat the validation-selected configuration with three locked seeds."""
     console.print(repeat_selected_seeds(overwrite=overwrite).to_string(index=False))

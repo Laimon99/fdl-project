@@ -16,6 +16,7 @@ from rich.progress import BarColumn, DownloadColumn, Progress, TextColumn, TimeR
 
 from .constants import (
     BACKGROUND_NOISE_DIR,
+    BACKGROUND_SPLIT_FRACTIONS,
     CLIP_SAMPLES,
     DATASET_ARCHIVE,
     DATASET_URL,
@@ -179,12 +180,7 @@ def _silence_records(
     seed: int,
 ) -> list[dict[str, Any]]:
     """Create virtual background-only clips from split-specific temporal regions."""
-    fractions = {
-        "training": (0.0, 0.8),
-        "validation": (0.8, 0.9),
-        "testing": (0.9, 1.0),
-    }
-    start_fraction, end_fraction = fractions[split]
+    start_fraction, end_fraction = BACKGROUND_SPLIT_FRACTIONS[split]
     sources = noise_inventory.sort_values("path").to_dict("records")
     if not sources:
         raise ProjectError("The dataset does not contain background-noise recordings")
@@ -392,4 +388,3 @@ def prepare_data(force_inventory: bool = False, seed: int = 42) -> pd.DataFrame:
     if force_inventory or not INVENTORY_PATH.exists():
         build_raw_inventory()
     return build_manifest(seed=seed)
-

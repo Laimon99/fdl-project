@@ -60,8 +60,10 @@ appears in more than one split.
 
 Silence clips use split-specific, temporally disjoint regions (80%/10%/10%) of every
 background file. Overlap across train, validation, and test is checked before writing the
-manifest. Feature normalization is learned on training data only; augmentation is never
-applied to validation or test.
+manifest. The same boundaries govern noise use throughout the pipeline: training
+augmentation draws only from the first 80%, validation robustness from the following 10%,
+and final-test robustness from the last 10%. Feature normalization is learned on training
+data only; stochastic augmentation is never applied to validation or test.
 
 ## Limitations and risks
 
@@ -75,4 +77,3 @@ applied to validation or test.
 The final evaluation therefore includes unseen speakers, per-class metrics, confidence
 calibration, background-noise stress tests, temporal shifts, and direct inspection/listening
 of selected failures.
-

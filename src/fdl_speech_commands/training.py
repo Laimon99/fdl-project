@@ -249,7 +249,7 @@ def repeat_selected_seeds(
     for seed in seeds:
         run_id = best_id if seed == 42 else f"{best_id}_seed{seed}"
         run_dir = PROJECT_ROOT / "artifacts" / "runs" / run_id
-        if not (run_dir / "validation_metrics.json").exists():
+        if overwrite or not (run_dir / "validation_metrics.json").exists():
             train_experiment(
                 source_config,
                 overwrite=overwrite,
