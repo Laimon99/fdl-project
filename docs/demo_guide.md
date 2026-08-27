@@ -12,12 +12,12 @@ uv run fdl-speech doctor
 ## Demo A - correct but uncertain
 
 ```powershell
-uv run fdl-speech infer artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_audio/uncertain_correct_scv1-027703.wav
+uv run fdl-speech infer artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_audio/uncertain_correct_scv1-026407.wav
 ```
 
-Expected top prediction: `off`, confidence approximately `0.190`. The competing `down` probability is approximately `0.187`. This example illustrates that a correct decision can remain ambiguous.
+Ground truth and expected top prediction: `up`, confidence approximately `0.344`. The competing `left` probability is approximately `0.162`. This spoken-command example illustrates that a correct decision can remain ambiguous.
 
-Saved output: `artifacts/demo/correct_off_prediction.json`.
+Saved output: `artifacts/demo/correct_up_prediction.json`.
 
 ## Demo B - confident failure
 
@@ -25,7 +25,7 @@ Saved output: `artifacts/demo/correct_off_prediction.json`.
 uv run fdl-speech infer artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_audio/high_confidence_error_scv1-026775.wav
 ```
 
-Ground truth: `down`. Expected prediction: `no`, confidence approximately `0.9996`. This is the first qualitative example on slide 14 and demonstrates why aggregate calibration is not sufficient.
+Ground truth: `down`. Expected prediction: `no`, confidence approximately `0.9988`. This qualitative example demonstrates why aggregate calibration is not sufficient.
 
 Saved output: `artifacts/demo/failure_down_as_no_prediction.json`.
 

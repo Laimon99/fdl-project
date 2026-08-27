@@ -7,11 +7,11 @@
 - Framework: TensorFlow 2.21 with Keras 3.15.
 - Parameters: 292,271.
 - Serialized Keras model: 3.42 MiB at `artifacts/models/speech_commands_best.keras`.
-- Test accuracy: 0.9419; macro-F1: 0.9421.
-- Test calibration ECE: 0.0198.
-- Compiled end-to-end CPU latency: 3.41 ms median at batch size
+- Test accuracy: 0.9312; macro-F1: 0.9315.
+- Test calibration ECE: 0.0303.
+- Compiled end-to-end CPU latency: 3.33 ms median at batch size
   one, including feature extraction (200 timed repetitions).
-- Test macro-F1 95% stratified-bootstrap CI: [0.9338, 0.9501].
+- Test macro-F1 95% stratified-bootstrap CI: [0.9228, 0.9402].
 
 ## Intended use
 

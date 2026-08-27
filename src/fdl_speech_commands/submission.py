@@ -71,7 +71,7 @@ FINAL_REQUIRED_FILES = (
     "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_samples.csv",
     "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_gallery.png",
     "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_audio/high_confidence_error_scv1-026775.wav",
-    "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_audio/uncertain_correct_scv1-027703.wav",
+    "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_audio/uncertain_correct_scv1-026407.wav",
     "docs/data_card.md",
     "docs/experiment_protocol.md",
     "docs/final_report.md",

@@ -10,7 +10,7 @@ Target duration: 15 minutes. The script is intentionally slightly shorter than t
 
 ## Slide 1 - Robust keyword spotting from scratch (0:00-0:45)
 
-Good morning. We are Simone, Vlad, and INSERT FULL NAME. Our project studies speaker-independent keyword spotting on Google Speech Commands. We did not treat this as a single model-training exercise. We built a complete and reproducible pipeline, from raw WAV files to a frozen Keras model, and we evaluated both where it works and where it fails. Our central question is: which audio representation, neural architecture, and augmentation strategy remain convincing when the data protocol prevents speaker leakage and the final test set is opened only once?
+Good morning. We are Simone, Vlad, and INSERT FULL NAME. Our project studies speaker-independent keyword spotting on Google Speech Commands. We did not treat this as a single model-training exercise. We built a complete and reproducible pipeline, from raw WAV files to a frozen Keras model, and we evaluated both where it works and where it fails. Our central question is: which audio representation, neural architecture, and augmentation strategy remain convincing when the data protocol prevents speaker leakage and every design choice is locked before final test evaluation?
 
 Transition: first, we define the exact task and the evidence available to us.
 
@@ -20,9 +20,9 @@ Every input is a mono waveform sampled at 16 kilohertz and lasting at most one s
 
 Transition: the task is compact, but the source data is substantially richer than twelve labels.
 
-## Slide 3 - Balanced modeling preserves the raw audit (1:35-2:30)
+## Slide 3 - Near-balanced modeling preserves the raw audit (1:35-2:30)
 
-Our local audit contains 64,721 spoken clips from 1,881 anonymized speakers and thirty original words. We preserve this raw inventory in the repository. The locked modeling manifest contains 28,420 examples and is balanced across the twelve output classes. Non-target words are sampled deterministically into unknown rather than discarded, and silence is synthesized from the supplied background recordings. This gives us a manageable classification task without pretending that only the ten target words exist.
+Our local audit contains 64,721 spoken clips from 1,881 anonymized speakers and thirty original words. We preserve this raw inventory in the repository. The locked modeling manifest contains 28,420 examples and is approximately balanced across the twelve output classes. We keep every target-command recording; their source counts are already similar. Non-target words are sampled deterministically into unknown rather than discarded, and silence is synthesized from the supplied background recordings. This gives us a manageable classification task without pretending that only the ten target words exist.
 
 Transition: before choosing a network, we inspected the signal characteristics that preprocessing must handle.
 
@@ -40,7 +40,7 @@ Handover: Vlad will now explain how we represent the audio and compare the neura
 
 ## Slide 6 - Log-Mel preserves time-frequency structure (5:00-5:55)
 
-We standardize the waveform, compute a short-time Fourier transform with a 30 millisecond Hann window and a 10 millisecond stride, and project the spectrum onto forty Mel filters. After the logarithm and train-only normalization, each clip becomes a 40 by 101 time-frequency map. This representation keeps local frequency patterns and their evolution over time. We also compute thirteen MFCCs for a lower-dimensional baseline, but the main models operate on the full log-Mel map.
+We standardize the waveform, compute a short-time Fourier transform with a 30 millisecond Hann window and a 10 millisecond stride, and project the spectrum onto forty Mel filters. With no end padding, each clip becomes a 40 by 98 time-frequency map after the logarithm and train-only normalization. This representation keeps local frequency patterns and their evolution over time. We also compute thirteen MFCCs for a lower-dimensional baseline, but the main models operate on the full log-Mel map.
 
 Transition: we use this pipeline in a controlled matrix rather than changing several variables at once.
 
@@ -58,37 +58,37 @@ Transition: to avoid optimistic reporting, the order of training, selection, rep
 
 ## Slide 9 - The test set stays sealed (7:50-8:50)
 
-Each configuration is trained with Adam, early stopping, fixed seeds, and the same manifest. We select the best configuration on validation, then repeat only that configuration with seeds 7, 21, and 42. Its validation macro-F1 is 0.9424 plus or minus 0.0009, so the result is stable. The seed study does not reopen architecture selection. The seed-42 model remains frozen and receives one clean test evaluation, followed by diagnostic corruptions and error analysis.
+Each configuration is trained with Adam, early stopping, fixed seeds, and the same manifest. We select the best configuration on validation, then repeat only that configuration with seeds 7, 21, and 42. Its validation macro-F1 is 0.9394 plus or minus 0.0005, so the result is stable. The seed study does not reopen architecture selection. Once the corrected protocol is frozen, the seed-42 model receives the final clean test evaluation, followed by diagnostic corruptions and error analysis.
 
 Transition: the validation ranking shows both the winner and a useful efficiency alternative.
 
 ## Slide 10 - The CRNN wins validation (8:50-10:00)
 
-The augmented CRNN reaches 0.9427 validation macro-F1. The clean DS-CNN is second at 0.9324, about one point lower but with roughly one sixth of the parameters. The conventional CNN reaches 0.8759, and the MFCC MLP is last at 0.8390 despite having the largest parameter count. E04 is especially important: augmentation lowers clean validation performance for the DS-CNN. We did not hide that negative result; it motivates the robustness analysis on the next slide.
+The augmented CRNN reaches 0.9399 validation macro-F1. The clean DS-CNN is second at 0.9324, about eight tenths of a point lower but with roughly one sixth of the parameters. The conventional CNN reaches 0.8759, and the MFCC MLP is last at 0.8390 despite having the largest parameter count. E04 is especially important: in a strict comparison where only augmentation changes, it lowers clean validation performance for the DS-CNN. We did not hide that negative result; it motivates the robustness analysis on the next slide.
 
 Handover: INSERT FULL NAME will discuss the negative result, frozen test performance, and failure modes.
 
 ## Slide 11 - Augmentation buys noise robustness (10:00-11:05)
 
-On clean validation data, adding the full augmentation recipe to the DS-CNN costs 2.74 macro-F1 points. If we stopped at the clean leaderboard, we would call it a failure. Under background noise at zero decibels, however, the same augmented DS-CNN improves by 52.35 points over the clean model. The CRNN combines the best clean result with the strongest curve. This is a real trade-off: augmentation can reduce in-distribution fit while substantially improving invariance.
+On clean validation data, adding the full augmentation recipe to the otherwise identical DS-CNN costs 2.29 macro-F1 points. If we stopped at the clean leaderboard, we would call it a failure. Under held-out background noise at zero decibels, however, the same augmented DS-CNN improves by 50.20 points over the clean model. The CRNN combines the best clean result with the strongest curve. This is a real trade-off: augmentation can reduce in-distribution fit while substantially improving invariance.
 
-Transition: after selection, we opened the frozen test set once.
+Transition: after the corrected protocol and validation selection were locked, we ran the final test evaluation.
 
 ## Slide 12 - Frozen test confirms validation (11:05-12:05)
 
-The frozen CRNN reaches 94.19 percent test accuracy and 0.9421 macro-F1 on 3,081 examples. Ten-thousand stratified bootstrap resamples give a 95 percent interval from 0.9338 to 0.9501 for macro-F1. The validation-to-test change is minus 0.06 points, so there is no material generalization gap. The normalized confusion matrix is strongly diagonal, but unknown and down remain visibly weaker than the other classes.
+The frozen CRNN reaches 93.12 percent test accuracy and 0.9315 macro-F1 on 3,081 examples. Ten-thousand stratified bootstrap resamples give a 95 percent interval from 0.9228 to 0.9402 for macro-F1. The validation-to-test change is minus 0.85 points, so the model transfers well without claiming identical performance. The normalized confusion matrix is strongly diagonal, but unknown remains visibly weaker than the command classes.
 
 Transition: aggregate accuracy is not the whole operational story.
 
 ## Slide 13 - Noise remains the main failure axis (12:05-13:00)
 
-At 20 decibels the test macro-F1 is still 0.9308, at 10 decibels it is 0.9096, and at zero decibels it falls to 0.8146. By contrast, shifting the waveform by plus or minus 100 milliseconds costs at most 0.34 points. Expected calibration error is 0.0198. The serialized model is 3.42 MiB, and compiled feature extraction plus CPU inference takes a median of 3.41 milliseconds on the recorded evaluation machine. These figures demonstrate interactivity, not production certification.
+At 20 decibels the test macro-F1 is still 0.9246, at 10 decibels it is 0.9106, and at zero decibels it falls to 0.8199. By contrast, shifting the waveform by plus or minus 100 milliseconds costs at most 0.38 points. Expected calibration error is 0.0303. The serialized model is 3.42 MiB, and compiled feature extraction plus CPU inference takes a median of 3.33 milliseconds on the recorded evaluation machine. These figures demonstrate interactivity, not production certification.
 
 Transition: the qualitative audit exposes failures that calibration averages cannot summarize.
 
 ## Slide 14 - Rare confident failures survive calibration (13:00-14:05)
 
-Unknown is the weakest class with F1 0.854. The most common directed confusion is down predicted as no, occurring fourteen times. More importantly, the six most confident errors all have confidence of at least 0.998. Low aggregate ECE therefore does not mean the system is never overconfident. We export every selected example as a playable WAV, so during the defense we can listen to phonetic ambiguity, truncation, low energy, background interference, or possible label uncertainty instead of relying only on a matrix.
+Unknown is the weakest class with F1 0.840. The most common directed confusion is silence predicted as up, occurring seventeen times. More importantly, the six most confident errors all have confidence of at least 0.998. Low aggregate ECE therefore does not mean the system is never overconfident. We export every selected example as a playable WAV, so during the defense we can listen to phonetic ambiguity, truncation, low energy, background interference, or possible label uncertainty instead of relying only on a matrix.
 
 Transition: these findings lead to a deliberately qualified conclusion.
 

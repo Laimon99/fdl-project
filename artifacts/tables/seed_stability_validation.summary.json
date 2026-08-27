@@ -5,8 +5,8 @@
     42
   ],
   "selected_config": "e05_logmel_crnn_aug",
-  "validation_accuracy_mean": 0.9419118439487013,
-  "validation_accuracy_std": 0.000673024894751434,
-  "validation_macro_f1_mean": 0.9424039008927375,
-  "validation_macro_f1_std": 0.0008831074449551046
+  "validation_accuracy_mean": 0.938894277400582,
+  "validation_accuracy_std": 0.0005599905617745751,
+  "validation_macro_f1_mean": 0.9394140415160236,
+  "validation_macro_f1_std": 0.0005211375125454457
 }

@@ -1,19 +1,19 @@
 {
   "audio_path": "artifacts/runs/e05_logmel_crnn_aug/evaluation_testing/qualitative_audio/high_confidence_error_scv1-026775.wav",
-  "confidence": 0.9995915293693542,
+  "confidence": 0.9988002777099609,
   "predicted_label": "no",
   "top_3": [
     {
       "label": "no",
-      "probability": 0.9995915293693542
-    },
-    {
-      "label": "go",
-      "probability": 0.00019775156397372484
+      "probability": 0.9988002777099609
     },
     {
       "label": "down",
-      "probability": 0.00016911314742174
+      "probability": 0.0008447085856460035
+    },
+    {
+      "label": "go",
+      "probability": 0.00034399484866298735
     }
   ]
 }

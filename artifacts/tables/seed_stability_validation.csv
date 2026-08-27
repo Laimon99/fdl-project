@@ -1,4 +1,4 @@
 selected_config,run_id,seed,accuracy,epochs_completed,macro_f1,parameters
-e05_logmel_crnn_aug,e05_logmel_crnn_aug_seed7,7,0.9424506951180084,39,0.9430912580469356,292271
-e05_logmel_crnn_aug,e05_logmel_crnn_aug_seed21,21,0.9411574523116715,32,0.9414078927468892,292271
-e05_logmel_crnn_aug,e05_logmel_crnn_aug,42,0.9421273844164242,38,0.9427125518843879,292271
+e05_logmel_crnn_aug,e05_logmel_crnn_aug_seed7,7,0.9385709666989978,35,0.9394024945263167,292271
+e05_logmel_crnn_aug,e05_logmel_crnn_aug_seed21,21,0.9385709666989978,41,0.9388987734508709,292271
+e05_logmel_crnn_aug,e05_logmel_crnn_aug,42,0.9395408988037504,44,0.9399408565708831,292271

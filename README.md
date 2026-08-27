@@ -49,17 +49,17 @@ uv run fdl-speech smoke-test
 | E01 | 13 MFCCs | MLP | none | low-capacity neural baseline |
 | E02 | 40-bin log-Mel | compact 2D CNN | none | convolutional baseline |
 | E03 | 40-bin log-Mel | depthwise-separable CNN | none | efficient KWS model |
-| E04 | 40-bin log-Mel | depthwise-separable CNN | waveform + SpecAugment | augmentation ablation |
+| E04 | 40-bin log-Mel | depthwise-separable CNN | waveform + SpecAugment | strict E03 augmentation ablation |
 | E05 | 40-bin log-Mel | convolutional BiGRU | waveform + SpecAugment | temporal model comparison |
 
 ## Main result
 
-The validation-selected E05 CRNN reaches **94.19% accuracy** and **0.9421 macro-F1**
+The validation-selected E05 CRNN reaches **93.12% accuracy** and **0.9315 macro-F1**
 on the frozen 3,081-example test split. Its stratified-bootstrap macro-F1 95% confidence
-interval is **[0.9338, 0.9501]** over 10,000 resamples. The model has 292,271 parameters,
-occupies 3.42 MiB, and records 3.41 ms median compiled feature-extraction-plus-inference
+interval is **[0.9228, 0.9402]** over 10,000 resamples. The model has 292,271 parameters,
+occupies 3.42 MiB, and records 3.33 ms median compiled feature-extraction-plus-inference
 latency on the documented CPU environment. At 0 dB background noise, macro-F1 falls to
-0.8146; `unknown` is the weakest clean class at 0.8543 F1. These negative results are part
+0.8199; `unknown` is the weakest clean class at 0.8404 F1. These negative results are part
 of the conclusion, not omitted from the headline.
 
 See the [final report](docs/final_report.md), [model card](docs/model_card.md), and
@@ -68,8 +68,12 @@ the full quantitative and qualitative evidence.
 
 The best architecture is repeated with three seeds. The test split remains untouched
 until model selection is complete; selection uses validation macro-F1 and accuracy.
-`finalize` promotes the selected model and performs its one-time clean, robustness,
+`finalize` promotes the selected model and performs its gated clean, robustness,
 calibration, efficiency, and qualitative test evaluation.
+
+The green CI badge covers linting plus unit and synthetic-data tests. The raw archive is not
+stored in Git, so complete data preparation, training, and evaluation are a separate local
+reproduction documented in `docs/reproducibility.md`.
 
 ## Repository map
 
@@ -87,6 +91,8 @@ calibration, efficiency, and qualitative test evaluation.
 - `unknown` is sampled deterministically from non-target words at the standard 10% rate.
 - `silence` is synthesized from background-noise recordings using non-overlapping temporal
   regions across train, validation, and test.
+- Training augmentation, validation corruptions, and test corruptions use only their own
+  temporally reserved 80%/10%/10% background-noise regions.
 - Preprocessing statistics are learned from training data only and embedded in saved models.
 - Test metrics include bootstrap confidence intervals, per-class performance, calibration,
   latency, model size, corrupted-audio robustness, and a traceable error gallery.

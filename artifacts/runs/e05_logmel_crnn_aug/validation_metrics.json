@@ -1,6 +1,6 @@
 {
-  "accuracy": 0.9421273844164242,
-  "epochs_completed": 38,
-  "macro_f1": 0.9427125518843879,
+  "accuracy": 0.9395408988037504,
+  "epochs_completed": 44,
+  "macro_f1": 0.9399408565708831,
   "parameters": 292271
 }

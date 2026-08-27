@@ -18,9 +18,9 @@ The official validation and testing lists assign held-out files. Speaker identif
 
 Yes. Windows cut from the same background track can be nearly identical. We partition temporal regions of every background recording by split and verify that the reserved regions do not overlap.
 
-### Why is the modeled set balanced?
+### Why is the modeled set approximately balanced?
 
-Target commands are sampled to a common per-class count, while unknown and silence are generated at deterministic ratios. This prevents frequent words from dominating selection and makes macro-F1 interpretable. The untouched raw inventory remains available in the EDA artifacts.
+Every recording of each target command is retained; target classes are not downsampled to a common count. Their source counts happen to be similar. Unknown and silence are each set to ten percent of the total target count, which is approximately the size of one target class. We still select with macro-F1 so that small residual differences cannot let a frequent class dominate. The untouched raw inventory and exact modeled counts remain available in the EDA artifacts.
 
 ## Representation and models
 
@@ -56,7 +56,7 @@ That would introduce post-selection optimism. Seed 42 was selected and frozen be
 
 ### How was the test set protected?
 
-All architecture and augmentation decisions use validation metrics. `selection.json` records the frozen experiment before `finalize` computes test predictions. The test evaluation is a separate artifact and cannot influence the leaderboard.
+All architecture and augmentation decisions use validation metrics. `selection.json` records the frozen experiment before `finalize` computes test predictions. After external review found protocol defects unrelated to test performance, we defined the corrections, retrained every affected run, and rebuilt validation selection before regenerating the final test artifact. Neither the earlier nor current test metrics influenced architecture or hyperparameters.
 
 ### Why does augmentation reduce clean DS-CNN performance?
 
@@ -68,17 +68,17 @@ The combined waveform perturbations and SpecAugment make the training distributi
 
 We use 10,000 stratified bootstrap resamples of the frozen test predictions with seed 2026. Stratification preserves class composition. The interval is the percentile interval of the resampled metric distribution.
 
-### What does ECE 0.0198 mean?
+### What does ECE 0.0303 mean?
 
-With fifteen confidence bins, the weighted average gap between predicted confidence and empirical accuracy is about two percentage points. ECE is an aggregate diagnostic and can hide rare, highly confident errors, as the qualitative gallery demonstrates.
+With fifteen confidence bins, the weighted average gap between predicted confidence and empirical accuracy is about three percentage points. ECE is an aggregate diagnostic and can hide rare, highly confident errors, as the qualitative gallery demonstrates.
 
 ### How is the noise robustness test generated?
 
-We mix deterministic held-out regions of the release's own background recordings at 20, 10, and 0 dB signal-to-noise ratios. It is a controlled stress test, not a comprehensive simulation of real rooms or microphones.
+We mix deterministic held-out regions of the release's own background recordings at 20, 10, and 0 dB signal-to-noise ratios. Training augmentation uses only the first 80% of every recording; validation uses 80–90% and test uses 90–100%. It is a controlled stress test, not a comprehensive simulation of real rooms or microphones.
 
 ### Why is the 0 dB result still relatively high?
 
-The final model was trained with real background mixing and time-frequency masking. The CRNN also aggregates temporal evidence. Nevertheless, the 12.75-point drop is substantial and is reported as the main operational limitation.
+The final model was trained with real background mixing and time-frequency masking. The CRNN also aggregates temporal evidence. Nevertheless, the 11.16-point macro-F1 drop is substantial and is reported as the main operational limitation.
 
 ### What exactly does the latency number include?
 
@@ -101,6 +101,10 @@ The group implementation covers deterministic manifest construction, leakage val
 ### How can the professor reproduce the result?
 
 Run `uv sync --extra dev`, then follow `docs/reproducibility.md` or `scripts/reproduce.ps1`. Dataset checksum, dependencies, configurations, manifests, seeds, trained Keras files, metrics, and predictions are versioned. Raw audio is downloaded from the official source.
+
+### Does the green CI badge reproduce the full experiment?
+
+No. CI verifies linting plus unit and synthetic-data tests without downloading the raw archive. The full data preparation, training, selection, and evaluation workflow is a separate local reproduction documented in `docs/reproducibility.md`. We distinguish these two levels explicitly rather than presenting CI as end-to-end experimental coverage.
 
 ### What would you try next?
 
