@@ -17,13 +17,13 @@ features:
   upper_hertz: 7600.0
 model:
   name: ds_cnn
-  dropout: 0.3
+  dropout: 0.25
 training:
   batch_size: 128
-  epochs: 55
+  epochs: 45
   learning_rate: 0.001
   weight_decay: 0.0001
-  patience: 10
+  patience: 9
   augment: true
 augmentation:
   max_shift_ms: 100
